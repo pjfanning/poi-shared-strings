@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+description = 'Memory efficient Shared String Table for POI'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.h2database:h2:1.4.197'
+    compile files('lib/poi-4.0.0-SNAPSHOT.jar')
+    compile files('lib/poi-ooxml-4.0.0-SNAPSHOT.jar')
+    compile files('lib/poi-ooxml-schemas-4.0.0-SNAPSHOT.jar')
+    compile 'org.apache.commons:commons-collections4:4.1'
+    compile 'org.apache.commons:commons-compress:1.17'
+    compile 'org.apache.xmlbeans:xmlbeans:3.0.0'
+    testCompile 'junit:junit:4.12'
+}
