@@ -5,11 +5,15 @@ import org.apache.poi.ooxml.POIXMLRelation;
 import org.apache.poi.xssf.usermodel.XSSFFactory;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 
-class SXSSFFactory extends XSSFFactory {
+public class SXSSFFactory extends XSSFFactory {
 
     private final boolean encryptTempFiles;
 
-    SXSSFFactory(boolean encryptTempFiles) {
+    public SXSSFFactory() {
+        this(false);
+    }
+
+    public SXSSFFactory(boolean encryptTempFiles) {
         super();
         this.encryptTempFiles = encryptTempFiles;
     }

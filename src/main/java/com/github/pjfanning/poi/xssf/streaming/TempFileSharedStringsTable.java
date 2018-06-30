@@ -41,7 +41,7 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * properties, and phonetic properties (for East Asian languages).
  * </p>
  */
-class TempFileSharedStringsTable extends SharedStringsTable {
+public class TempFileSharedStringsTable extends SharedStringsTable {
 
     private static final SecureRandom RND = new SecureRandom();
     private File tempFile;
@@ -56,6 +56,10 @@ class TempFileSharedStringsTable extends SharedStringsTable {
      *  Maps strings and their indexes in the <code>strings</code> arrays
      */
     private final MVMap<String, Integer> stmap;
+
+    public TempFileSharedStringsTable() {
+        this(false);
+    }
 
     public TempFileSharedStringsTable(boolean encryptTempFiles) {
         super();
