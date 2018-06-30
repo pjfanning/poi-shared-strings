@@ -46,6 +46,17 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
+
+    @Test
+    public void testReadStyledXML() throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+            sst.readFrom(is);
+            Assert.assertEquals(1, sst.getCount());
+            Assert.assertEquals("shared styled string", sst.getItemAt(0).getString());
+        }
+    }
+
     @Ignore("temporary test")
     @Test
     public void testLargeData() throws Exception {
