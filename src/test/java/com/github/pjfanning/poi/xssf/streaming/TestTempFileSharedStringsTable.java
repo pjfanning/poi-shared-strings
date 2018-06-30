@@ -2,6 +2,7 @@ package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 import org.apache.poi.ooxml.util.DocumentHelper;
 import org.apache.poi.xssf.usermodel.XSSFFont;
@@ -32,6 +33,16 @@ public class TestTempFileSharedStringsTable {
                 sst.writeTo(bos);
                 DocumentHelper.newDocumentBuilder().parse(new ByteArrayInputStream(bos.toByteArray()));
             }
+        }
+    }
+
+    @Test
+    public void testReadXML() throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+            sst.readFrom(is);
+            Assert.assertEquals(38, sst.getCount());
+            Assert.assertEquals("City", sst.getItemAt(0).getString());
         }
     }
 
