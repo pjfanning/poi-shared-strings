@@ -15,7 +15,7 @@ public class TestStreamingRead {
     public void testXSSFSheetXMLHandler() throws Exception {
         try (InputStream is = getResourceStream("sample.xlsx");
              OPCPackage pkg = PackageHelper.open(is);
-             ReadOnlyTempFileSharedStringsTable strings = new ReadOnlyTempFileSharedStringsTable(pkg)) {
+             TempFileSharedStringsTable strings = new TempFileSharedStringsTable(pkg, true)) {
             XSSFReader reader = new XSSFReader(pkg);
             new XSSFSheetXMLHandler(reader.getStylesTable(), strings, createSheetContentsHandler(), false);
         }

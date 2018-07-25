@@ -1,17 +1,22 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.util.StaxHelper;
 import org.apache.poi.util.TempFile;
 import org.apache.poi.xssf.model.SharedStringsTable;
+import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
+import org.xml.sax.SAXException;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
@@ -80,6 +85,15 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             if (mvStore != null) mvStore.closeImmediately();
             if (tempFile != null) tempFile.delete();
             throw new RuntimeException(e);
+        }
+    }
+
+    public TempFileSharedStringsTable(OPCPackage pkg, boolean encryptTempFiles) throws IOException {
+        this(encryptTempFiles);
+        ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
+        if (parts.size() > 0) {
+            PackagePart sstPart = (PackagePart)parts.get(0);
+            this.readFrom(sstPart.getInputStream());
         }
     }
 
