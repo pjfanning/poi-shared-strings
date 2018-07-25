@@ -1,7 +1,6 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.*;
-import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
 
@@ -42,8 +41,6 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileSharedStringsTable extends SharedStringsTable {
-
-    private static final SecureRandom RND = new SecureRandom();
     private File tempFile;
     private MVStore mvStore;
 
@@ -68,7 +65,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             MVStore.Builder mvStoreBuilder = new MVStore.Builder();
             if (encryptTempFiles) {
                 byte[] bytes = new byte[1024];
-                RND.nextBytes(bytes);
+                Constants.RANDOM.nextBytes(bytes);
                 mvStoreBuilder.encryptionKey(Base64.getEncoder().encodeToString(bytes).toCharArray());
             }
             mvStoreBuilder.fileName(tempFile.getAbsolutePath());
