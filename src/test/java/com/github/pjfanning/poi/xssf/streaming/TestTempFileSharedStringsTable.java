@@ -1,14 +1,11 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.io.*;
 
 import org.apache.poi.ooxml.util.DocumentHelper;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestTempFileSharedStringsTable {
@@ -57,20 +54,26 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
-    @Ignore("temporary test")
     @Test
-    public void testLargeData() throws Exception {
+    public void testWrite() throws Exception {
+        testWrite(10);
+    }
+
+    private void testWrite(int size) throws Exception {
         java.util.Random rnd = new java.util.Random();
         byte[] bytes = new byte[1028];
+        File file = new File("sst.txt");
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
-            for (int i = 0; i < 100000; i++) {
+            for (int i = 0; i < size; i++) {
                 rnd.nextBytes(bytes);
                 String rndString = java.util.Base64.getEncoder().encodeToString(bytes);
                 sst.addSharedStringItem(new XSSFRichTextString(rndString));
             }
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream("sst.txt")) {
+            try (java.io.FileOutputStream fos = new FileOutputStream(file)) {
                 sst.writeTo(fos);
             }
+        } finally {
+            file.delete();
         }
     }
 }
