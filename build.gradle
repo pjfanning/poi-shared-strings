@@ -11,8 +11,8 @@ dependencies {
     compile files('lib/poi-4.0.0-SNAPSHOT.jar')
     compile files('lib/poi-ooxml-4.0.0-SNAPSHOT.jar')
     compile files('lib/poi-ooxml-schemas-4.0.0-SNAPSHOT.jar')
-    compile 'org.apache.commons:commons-collections4:4.1'
-    compile 'org.apache.commons:commons-compress:1.17'
-    compile 'org.apache.xmlbeans:xmlbeans:3.0.0'
+    compile 'org.apache.commons:commons-collections4:4.2'
+    compile 'org.apache.commons:commons-compress:1.18'
+    compile 'org.apache.xmlbeans:xmlbeans:3.0.1'
     testCompile 'junit:junit:4.12'
 }
