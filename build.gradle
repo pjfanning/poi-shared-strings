@@ -1,8 +1,14 @@
-plugins {
-    id 'java'
-    id 'maven-publish'
-    id 'signing'
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
+    }
 }
+
+apply plugin: 'java'
+apply plugin: 'com.bmuschko.nexus'
 
 group = 'com.github.pjfanning'
 version = '1.0.0-SNAPSHOT'
@@ -22,74 +28,31 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
-task sourceJar(type: Jar) {
-    classifier "sources"
-    from sourceSets.main.allJava
-}
+modifyPom {
+    project {
+        name 'POI Shared Strings'
+        description 'Memory efficient Shared Strings Table implementation for POI streaming'
+        url 'https://github.com/pjfanning/poi-shared-strings'
+        inceptionYear '2018'
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier "javadoc"
-    from javadoc.destinationDir
-}
+        scm {
+            url 'https://github.com/pjfanning/poi-shared-strings'
+            connection 'scm:https://bmuschko@github.com/pjfanning/poi-shared-strings.git'
+            developerConnection 'scm:git://github.com/pjfanning/poi-shared-strings.git'
+        }
 
-artifacts {
-    archives jar
-    archives sourceJar
-    archives javadocJar
-}
-
-signing {
-    sign configurations.archives
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            customizePom(pom)
-            groupId 'com.github.pjfanning'
-            artifactId 'poi-shared-strings'
-            version '1.0.0-SNAPSHOT'
-
-            from components.java
-
-            // create the sign pom artifact
-            pom.withXml {
-                def pomFile = file("${project.buildDir}/generated-pom.xml")
-                writeTo(pomFile)
-                def pomAscFile = signing.sign(pomFile).signatureFiles[0]
-                artifact(pomAscFile) {
-                    classifier = null
-                    extension = 'pom.asc'
-                }
-            }
-
-            artifact(sourceJar) {
-                classifier = 'sources'
-            }
-            artifact(javadocJar) {
-                classifier = 'javadoc'
-            }
-
-            // create the signed artifacts
-            project.tasks.signArchives.signatureFiles.each {
-                artifact(it) {
-                    def matcher = it.file =~ /-(sources|javadoc)\.jar\.asc$/
-                    if (matcher.find()) {
-                        classifier = matcher.group(1)
-                    } else {
-                        classifier = null
-                    }
-                    extension = 'jar.asc'
-                }
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
             }
         }
-    }
-    repositories {
-        maven {
-            url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-            credentials {
-                username sonatypeUsername
-                password sonatypePassword
+
+        developers {
+            developer {
+                id 'pjfanning'
+                name 'PJ Fanning'
             }
         }
     }
@@ -137,17 +100,5 @@ def customizePom(pom) {
                 }
             }
         }
-    }
-}
-
-model {
-    tasks.generatePomFileForMavenJavaPublication {
-        destination = file("$buildDir/generated-pom.xml")
-    }
-    tasks.publishMavenJavaPublicationToMavenLocal {
-        dependsOn project.tasks.signArchives
-    }
-    tasks.publishMavenJavaPublicationToMavenRepository {
-        dependsOn project.tasks.signArchives
     }
 }
