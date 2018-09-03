@@ -37,7 +37,7 @@ modifyPom {
 
         scm {
             url 'https://github.com/pjfanning/poi-shared-strings'
-            connection 'scm:https://bmuschko@github.com/pjfanning/poi-shared-strings.git'
+            connection 'scm:git://github.com/pjfanning/poi-shared-strings.git'
             developerConnection 'scm:git://github.com/pjfanning/poi-shared-strings.git'
         }
 
