@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pjfanning/poi-shared-strings.svg?branch=master)](https://travis-ci.org/pjfanning/poi-shared-strings)
+
 # poi-shared-strings
 Memory efficient Shared Strings Table implementation for [POI](https://poi.apache.org/) xlsx streaming. Supports read and write use cases when used with POI 4.0.0.
 
