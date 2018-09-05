@@ -2,3 +2,5 @@
 Memory efficient Shared Strings Table implementation for POI streaming
 
 https://bz.apache.org/bugzilla/show_bug.cgi?id=61832
+
+There is a [sample](https://github.com/pjfanning/poi-shared-strings-sample).
