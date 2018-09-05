@@ -9,9 +9,7 @@ This class can be used instead of the POI [SharedStringsTable](https://poi.apach
 
 ## Samples
 
-There is a [file reading sample](https://github.com/pjfanning/poi-shared-strings-sample).
-
-I will soon add a file writing sample but this [test code](https://github.com/pjfanning/poi-shared-strings/blob/master/src/test/java/com/github/pjfanning/poi/xssf/streaming/TestSXSSFWorkbookWithTempFileSharedStringsTable.java) might help to get you started.
+There is an xlsx reading sample and also an xlsx writing sample at https://github.com/pjfanning/poi-shared-strings-sample.
 
 ## Usage
 
