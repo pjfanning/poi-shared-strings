@@ -141,7 +141,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      */
     @Override
     public RichTextString getItemAt(int idx) {
-        return new XSSFRichTextString(strings.get(idx));
+        CTRst rst = strings.get(idx);
+        return rst == null ? new XSSFRichTextString() : new XSSFRichTextString(rst);
     }
 
     /**

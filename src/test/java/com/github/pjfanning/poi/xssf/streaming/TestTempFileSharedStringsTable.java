@@ -3,6 +3,7 @@ package com.github.pjfanning.poi.xssf.streaming;
 import java.io.*;
 
 import org.apache.poi.ooxml.util.DocumentHelper;
+import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
@@ -43,7 +44,6 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
-
     @Test
     public void testReadStyledXML() throws Exception {
         try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
@@ -51,6 +51,15 @@ public class TestTempFileSharedStringsTable {
             sst.readFrom(is);
             Assert.assertEquals(1, sst.getCount());
             Assert.assertEquals("shared styled string", sst.getItemAt(0).getString());
+        }
+    }
+
+    @Test
+    public void testReadMissingEntry() throws Exception {
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+            RichTextString rts = sst.getItemAt(0);
+            Assert.assertNotNull(rts);
+            Assert.assertNull(rts.toString());
         }
     }
 
