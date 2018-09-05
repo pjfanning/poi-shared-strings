@@ -5,7 +5,7 @@ https://bz.apache.org/bugzilla/show_bug.cgi?id=61832
 
 The `TempFileSharedStringsTable` uses a [H2 MVStore](http://www.h2database.com/html/mvstore.html) to store the Excel Shared String data. The MVStore data can be encrypted using a generated password.
 
-This class can be used instead of the POI [SharedStringTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/model/SharedStringsTable.html) and [ReadOnlySharedStringTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/eventusermodel/ReadOnlySharedStringsTable.html). It is only useful if you expect to need to support large numbers of shared string entries.
+This class can be used instead of the POI [SharedStringsTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/model/SharedStringsTable.html) and [ReadOnlySharedStringsTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/eventusermodel/ReadOnlySharedStringsTable.html). It is only useful if you expect to need to support large numbers of shared string entries.
 
 ## Samples
 
