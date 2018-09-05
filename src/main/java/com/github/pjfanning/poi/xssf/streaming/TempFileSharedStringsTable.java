@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
@@ -127,10 +128,13 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * @param idx index of item to return.
      * @return the item at the specified position in this Shared String table.
      * @deprecated use <code>getItemAt(int idx)</code> instead
+     * @throws NoSuchElementException if no item exists for this index
      */
     @Override
     public CTRst getEntryAt(int idx) {
-        return strings.get(idx);
+        CTRst rst = strings.get(idx);
+        if (rst == null) throw new NoSuchElementException();
+        return rst;
     }
 
     /**
@@ -138,11 +142,11 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      *
      * @param idx index of item to return.
      * @return the item at the specified position in this Shared String table.
+     * @throws NoSuchElementException if no item exists for this index
      */
     @Override
     public RichTextString getItemAt(int idx) {
-        CTRst rst = strings.get(idx);
-        return rst == null ? new XSSFRichTextString() : new XSSFRichTextString(rst);
+        return new XSSFRichTextString(getEntryAt(idx));
     }
 
     /**

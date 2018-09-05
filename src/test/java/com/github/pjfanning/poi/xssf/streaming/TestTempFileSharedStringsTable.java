@@ -1,6 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.*;
+import java.util.NoSuchElementException;
 
 import org.apache.poi.ooxml.util.DocumentHelper;
 import org.apache.poi.ss.usermodel.RichTextString;
@@ -54,12 +55,10 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
-    @Test
+    @Test(expected = NoSuchElementException.class)
     public void testReadMissingEntry() throws Exception {
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
             RichTextString rts = sst.getItemAt(0);
-            Assert.assertNotNull(rts);
-            Assert.assertNull(rts.toString());
         }
     }
 
