@@ -1,6 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -248,8 +249,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      */
     @Override
     public void writeTo(OutputStream out) throws IOException {
-        Writer writer = new BufferedWriter(
-                new OutputStreamWriter(out, "UTF-8"));
+        Writer writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
         try {
             writer.write("<sst count=\"");
             writer.write(Integer.toString(count));
