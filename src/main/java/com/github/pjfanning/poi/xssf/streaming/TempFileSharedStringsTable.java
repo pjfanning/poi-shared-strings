@@ -115,7 +115,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
 
                 if(xmlEvent.isStartElement() && xmlEvent.asStartElement().getName().getLocalPart().equals("si")) {
                     String str = parseCT_Rst(xmlEventReader);
-                    addEntry(new XSSFRichTextString(str).getCTRst());
+                    addSharedStringItem(new XSSFRichTextString(str));
                 }
             }
         } catch(XMLStreamException e) {
@@ -187,6 +187,9 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      */
     @Override
     public int addEntry(CTRst st) {
+        if (st == null) {
+            throw new NullPointerException("Cannot add null entry to SharedStringsTable");
+        }
         String s = xmlText(st);
         count++;
         if (stmap.containsKey(s)) {
@@ -301,7 +304,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                     throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
             }
         }
-        return buf.length() > 0 ? buf.toString() : null;
+        return buf.toString();
     }
 
     /**
