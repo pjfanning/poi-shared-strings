@@ -17,11 +17,14 @@ description = 'Memory efficient Shared String Table for POI'
 
 repositories {
     mavenCentral()
+    maven {
+        url "https://repository.apache.org/content/repositories/staging/"
+    }
 }
 
 dependencies {
     compile 'com.h2database:h2:1.4.197'
-    compile 'org.apache.poi:poi-ooxml:4.0.0'
+    compile 'org.apache.poi:poi-ooxml:4.0.1'
     testCompile 'junit:junit:4.12'
 }
 
