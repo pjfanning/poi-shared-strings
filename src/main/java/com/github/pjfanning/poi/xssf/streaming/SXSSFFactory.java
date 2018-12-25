@@ -7,15 +7,23 @@ import org.apache.poi.xssf.usermodel.XSSFRelation;
 
 public class SXSSFFactory extends XSSFFactory {
 
-    private final boolean encryptTempFiles;
+    private boolean encryptTempFiles = false;
 
-    public SXSSFFactory() {
-        this(false);
-    }
+    public SXSSFFactory() {}
 
+    /**
+     * @param encryptTempFiles
+     * @deprecated use #encryptTempFiles method instead
+     */
+    @Deprecated
     public SXSSFFactory(boolean encryptTempFiles) {
         super();
         this.encryptTempFiles = encryptTempFiles;
+    }
+
+    public SXSSFFactory encryptTempFiles(boolean encryptTempFiles) {
+        this.encryptTempFiles = encryptTempFiles;
+        return this;
     }
 
     @Override
