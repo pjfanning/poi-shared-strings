@@ -18,7 +18,6 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
-import org.xml.sax.SAXException;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
@@ -94,7 +93,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         this(encryptTempFiles);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
         if (parts.size() > 0) {
-            PackagePart sstPart = (PackagePart)parts.get(0);
+            PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
     }
