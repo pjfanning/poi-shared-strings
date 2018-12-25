@@ -12,6 +12,10 @@ public class SXSSFFactory extends XSSFFactory {
 
     public SXSSFFactory() {}
 
+    /**
+     * @param encryptTempFiles
+     * @deprecated use #encryptTempFiles method instead
+     */
     @Deprecated
     public SXSSFFactory(boolean encryptTempFiles) {
         super();
@@ -21,8 +25,8 @@ public class SXSSFFactory extends XSSFFactory {
     public SXSSFFactory encryptTempFiles(boolean encryptTempFiles) {
         this.encryptTempFiles = encryptTempFiles;
         return this;
-
     }
+
     public SXSSFFactory enableTempFileComments(boolean enableTempFileComments) {
         this.enableTempFileComments = enableTempFileComments;
         return this;
