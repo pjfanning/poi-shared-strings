@@ -22,42 +22,46 @@ public class TestSXSSFWorkbookWithTempFileSharedStringsTable {
 
     @Test
     public void useStreamingSharedStringsTable() throws Exception {
-        SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(new SXSSFFactory(true)),
-                SXSSFWorkbook.DEFAULT_WINDOW_SIZE, true, true);
+        SXSSFFactory factory0 = new SXSSFFactory();
+        SXSSFFactory factory1 = new SXSSFFactory().encryptTempFiles(true);
+        for (SXSSFFactory factory : new SXSSFFactory[]{factory0, factory1}) {
+            SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),
+                    SXSSFWorkbook.DEFAULT_WINDOW_SIZE, true, true);
 
-        SharedStringsTable sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
+            SharedStringsTable sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
 
-        assertNotNull(sss);
-        assertEquals(TempFileSharedStringsTable.class, sss.getClass());
+            assertNotNull(sss);
+            assertEquals(TempFileSharedStringsTable.class, sss.getClass());
 
-        Row row = wb.createSheet("S1").createRow(0);
+            Row row = wb.createSheet("S1").createRow(0);
 
-        row.createCell(0).setCellValue("A");
-        row.createCell(1).setCellValue("B");
-        row.createCell(2).setCellValue("A");
+            row.createCell(0).setCellValue("A");
+            row.createCell(1).setCellValue("B");
+            row.createCell(2).setCellValue("A");
 
-        XSSFWorkbook xssfWorkbook = writeOutAndReadBack(wb);
-        sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
-        assertEquals(2, sss.getUniqueCount());
-        assertTrue(wb.dispose());
+            XSSFWorkbook xssfWorkbook = writeOutAndReadBack(wb);
+            sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
+            assertEquals(2, sss.getUniqueCount());
+            assertTrue(wb.dispose());
 
-        Sheet sheet1 = xssfWorkbook.getSheetAt(0);
-        assertEquals("S1", sheet1.getSheetName());
-        assertEquals(1, sheet1.getPhysicalNumberOfRows());
-        row = sheet1.getRow(0);
-        assertNotNull(row);
-        Cell cell = row.getCell(0);
-        assertNotNull(cell);
-        assertEquals("A", cell.getStringCellValue());
-        cell = row.getCell(1);
-        assertNotNull(cell);
-        assertEquals("B", cell.getStringCellValue());
-        cell = row.getCell(2);
-        assertNotNull(cell);
-        assertEquals("A", cell.getStringCellValue());
+            Sheet sheet1 = xssfWorkbook.getSheetAt(0);
+            assertEquals("S1", sheet1.getSheetName());
+            assertEquals(1, sheet1.getPhysicalNumberOfRows());
+            row = sheet1.getRow(0);
+            assertNotNull(row);
+            Cell cell = row.getCell(0);
+            assertNotNull(cell);
+            assertEquals("A", cell.getStringCellValue());
+            cell = row.getCell(1);
+            assertNotNull(cell);
+            assertEquals("B", cell.getStringCellValue());
+            cell = row.getCell(2);
+            assertNotNull(cell);
+            assertEquals("A", cell.getStringCellValue());
 
-        xssfWorkbook.close();
-        wb.close();
+            xssfWorkbook.close();
+            wb.close();
+        }
     }
 
     XSSFWorkbook writeOutAndReadBack(Workbook wb) {
