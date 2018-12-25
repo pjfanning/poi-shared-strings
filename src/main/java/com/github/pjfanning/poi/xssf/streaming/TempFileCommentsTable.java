@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  * properties, and phonetic properties (for East Asian languages).
  * </p>
  */
-public class TempFileCommentsTable implements Comments {
+public class TempFileCommentsTable implements Comments, AutoCloseable {
     private File tempFile;
     private MVStore mvStore;
 
@@ -113,7 +113,7 @@ public class TempFileCommentsTable implements Comments {
                         String ref = se.getAttributeByName(new QName("ref")).getValue();
                         String authorId = se.getAttributeByName(new QName("authorId")).getValue();
                         String str = parseComment(xmlEventReader);
-                        XSSFComment xc = new XSSFComment(null, null, null);
+                        XSSFComment xc = new SimpleXSSFComment();
                         xc.setAddress(new CellAddress(ref));
                         xc.setAuthor(authors.get(authorId));
                         xc.setString(str);
@@ -162,11 +162,37 @@ public class TempFileCommentsTable implements Comments {
         return set.stream().map((s) -> new CellAddress(s)).collect(Collectors.toSet()).iterator();
     }
 
+    @Override
+    public void close() {
+        if(mvStore != null) mvStore.closeImmediately();
+        if(tempFile != null) tempFile.delete();
+    }
+
     /**
      * Parses a {@code <comment>} Comment. Returns just the text and drops the formatting.
      */
     private String parseComment(XMLEventReader xmlEventReader) throws XMLStreamException {
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
+        XMLEvent xmlEvent;
+        String text = null;
+        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
+                case "text":
+                    parseCommentText(xmlEventReader);
+                    break;
+                default:
+                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
+            }
+        }
+        return text;
+    }
+
+
+    /**
+     * Parses a {@code <text>} Comment. Returns just the text and drops the formatting.
+     */
+    private String parseCommentText(XMLEventReader xmlEventReader) throws XMLStreamException {
+        // Precondition: pointing to <text>;  Post condition: pointing to </text>
         StringBuilder buf = new StringBuilder();
         XMLEvent xmlEvent;
         while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
