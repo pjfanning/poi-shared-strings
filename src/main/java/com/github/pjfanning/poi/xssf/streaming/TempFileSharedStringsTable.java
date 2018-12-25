@@ -1,12 +1,5 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.NoSuchElementException;
-
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
@@ -22,6 +15,12 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -113,7 +112,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
                 if(xmlEvent.isStartElement() && xmlEvent.asStartElement().getName().getLocalPart().equals("si")) {
-                    String str = parseCT_Rst(xmlEventReader);
+                    String str = TextParser.parseCT_Rst(xmlEventReader);
                     addSharedStringItem(new XSSFRichTextString(str));
                 }
             }
@@ -279,62 +278,5 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     public void close() throws IOException {
         if(mvStore != null) mvStore.closeImmediately();
         if(tempFile != null) tempFile.delete();
-    }
-
-    /**
-     * Parses a {@code <si>} String Item. Returns just the text and drops the formatting. See <a
-     * href="https://msdn.microsoft.com/en-us/library/documentformat.openxml.spreadsheet.sharedstringitem.aspx">xmlschema
-     * type {@code CT_Rst}</a>.
-     */
-    private String parseCT_Rst(XMLEventReader xmlEventReader) throws XMLStreamException {
-        // Precondition: pointing to <si>;  Post condition: pointing to </si>
-        StringBuilder buf = new StringBuilder();
-        XMLEvent xmlEvent;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
-                case "t": // Text
-                    buf.append(xmlEventReader.getElementText());
-                    break;
-                case "r": // Rich Text Run
-                    parseCT_RElt(xmlEventReader, buf);
-                    break;
-                case "rPh": // Phonetic Run
-                case "phoneticPr": // Phonetic Properties
-                    skipElement(xmlEventReader);
-                    break;
-                default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
-            }
-        }
-        return buf.toString();
-    }
-
-    /**
-     * Parses a {@code <r>} Rich Text Run. Returns just the text and drops the formatting. See <a
-     * href="https://msdn.microsoft.com/en-us/library/documentformat.openxml.spreadsheet.run.aspx">xmlschema
-     * type {@code CT_RElt}</a>.
-     */
-    private void parseCT_RElt(XMLEventReader xmlEventReader, StringBuilder buf) throws XMLStreamException {
-        // Precondition: pointing to <r>;  Post condition: pointing to </r>
-        XMLEvent xmlEvent;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
-                case "t": // Text
-                    buf.append(xmlEventReader.getElementText());
-                    break;
-                case "rPr": // Run Properties
-                    skipElement(xmlEventReader);
-                    break;
-                default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
-            }
-        }
-    }
-
-    private void skipElement(XMLEventReader xmlEventReader) throws XMLStreamException {
-        // Precondition: pointing to start element;  Post condition: pointing to end element
-        while(xmlEventReader.nextTag().isStartElement()) {
-            skipElement(xmlEventReader); // recursively skip over child
-        }
     }
 }

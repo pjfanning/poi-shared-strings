@@ -20,30 +20,13 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Table of strings shared across all sheets in a workbook.
+ * Table of comments.
  * <p>
- * A workbook may contain thousands of cells containing string (non-numeric) data. Furthermore this data is very
- * likely to be repeated across many rows or columns. The goal of implementing a single string table that is shared
- * across the workbook is to improve performance in opening and saving the file by only reading and writing the
- * repetitive information once.
- * </p>
- * <p>
- * Consider for example a workbook summarizing information for cities within various countries. There may be a
- * column for the name of the country, a column for the name of each city in that country, and a column
- * containing the data for each city. In this case the country name is repetitive, being duplicated in many cells.
- * In many cases the repetition is extensive, and a tremendous savings is realized by making use of a shared string
- * table when saving the workbook. When displaying text in the spreadsheet, the cell table will just contain an
- * index into the string table as the value of a cell, instead of the full string.
- * </p>
- * <p>
- * The shared string table contains all the necessary information for displaying the string: the text, formatting
+ * The comments table contains all the necessary information for displaying the string: the text, formatting
  * properties, and phonetic properties (for East Asian languages).
  * </p>
  */
@@ -116,7 +99,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                         String str = parseComment(xmlEventReader);
                         XSSFComment xc = new SimpleXSSFComment();
                         xc.setAddress(new CellAddress(ref));
-                        xc.setAuthor(authors.get(authorId));
+                        xc.setAuthor(authors.get(Integer.parseInt(authorId)));
                         xc.setString(str);
                         comments.put(ref, xc);
                     }
@@ -139,12 +122,19 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public String getAuthor(long authorId) {
-        return authors.get(Long.toString(authorId));
+        return authors.get((int)authorId);
     }
 
     @Override
     public int findAuthor(String author) {
-        return 0;
+        for (Map.Entry<Integer, String> entry : authors.entrySet()) {
+            if (entry.getValue().equals(author)) {
+                return entry.getKey();
+            }
+        }
+        int index = getNumberOfAuthors();
+        authors.put(index, author);
+        return index;
     }
 
     @Override
@@ -179,68 +169,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
             switch(xmlEvent.asStartElement().getName().getLocalPart()) {
                 case "text":
-                    parseCommentText(xmlEventReader);
+                    text = TextParser.parseCT_Rst(xmlEventReader);
                     break;
                 default:
                     throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
             }
         }
         return text;
-    }
-
-
-    /**
-     * Parses a {@code <text>} Comment. Returns just the text and drops the formatting.
-     */
-    private String parseCommentText(XMLEventReader xmlEventReader) throws XMLStreamException {
-        // Precondition: pointing to <text>;  Post condition: pointing to </text>
-        StringBuilder buf = new StringBuilder();
-        XMLEvent xmlEvent;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
-                case "t": // Text
-                    buf.append(xmlEventReader.getElementText());
-                    break;
-                case "r": // Rich Text Run
-                    parseCT_RElt(xmlEventReader, buf);
-                    break;
-                case "rPh": // Phonetic Run
-                case "phoneticPr": // Phonetic Properties
-                    skipElement(xmlEventReader);
-                    break;
-                default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
-            }
-        }
-        return buf.toString();
-    }
-
-    /**
-     * Parses a {@code <r>} Rich Text Run. Returns just the text and drops the formatting. See <a
-     * href="https://msdn.microsoft.com/en-us/library/documentformat.openxml.spreadsheet.run.aspx">xmlschema
-     * type {@code CT_RElt}</a>.
-     */
-    private void parseCT_RElt(XMLEventReader xmlEventReader, StringBuilder buf) throws XMLStreamException {
-        // Precondition: pointing to <r>;  Post condition: pointing to </r>
-        XMLEvent xmlEvent;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
-                case "t": // Text
-                    buf.append(xmlEventReader.getElementText());
-                    break;
-                case "rPr": // Run Properties
-                    skipElement(xmlEventReader);
-                    break;
-                default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
-            }
-        }
-    }
-
-    private void skipElement(XMLEventReader xmlEventReader) throws XMLStreamException {
-        // Precondition: pointing to start element;  Post condition: pointing to end element
-        while(xmlEventReader.nextTag().isStartElement()) {
-            skipElement(xmlEventReader); // recursively skip over child
-        }
     }
 }

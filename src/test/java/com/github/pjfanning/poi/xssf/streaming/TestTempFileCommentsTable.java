@@ -1,9 +1,12 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.commons.collections4.IteratorUtils;
+import org.apache.poi.ss.util.CellAddress;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.List;
 
 public class TestTempFileCommentsTable {
 
@@ -13,6 +16,19 @@ public class TestTempFileCommentsTable {
              TempFileCommentsTable ct = new TempFileCommentsTable(true)) {
             ct.readFrom(is);
             Assert.assertEquals(3, ct.getNumberOfComments());
+            List<CellAddress> addresses = IteratorUtils.toList(ct.getCellAddresses());
+            Assert.assertEquals(3, addresses.size());
+            Assert.assertEquals("A1", addresses.get(0).formatAsString());
+            Assert.assertEquals("A3", addresses.get(1).formatAsString());
+            Assert.assertEquals("A4", addresses.get(2).formatAsString());
+            for (CellAddress address : addresses) {
+                Assert.assertNotNull(ct.findCellComment(address));
+            }
+
+            Assert.assertEquals(1, ct.getNumberOfAuthors());
+            Assert.assertEquals("Sven Nissel", ct.getAuthor(0));
+            Assert.assertEquals(1, ct.findAuthor("new-author"));
+            Assert.assertEquals("new-author", ct.getAuthor(1));
         }
     }
 }
