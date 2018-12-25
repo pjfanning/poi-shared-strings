@@ -130,6 +130,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * @deprecated use <code>getItemAt(int idx)</code> instead
      * @throws NoSuchElementException if no item exists for this index
      */
+    @Deprecated
     @Override
     public CTRst getEntryAt(int idx) {
         CTRst rst = strings.get(idx);
@@ -184,6 +185,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * @return index the index of added entry
      * @deprecated use <code>addSharedStringItem(RichTextString string)</code> instead
      */
+    @Deprecated
     @Override
     public int addEntry(CTRst st) {
         if (st == null) {
@@ -227,6 +229,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * @return array of CTRst beans
      * @deprecated use <code>getItemAt</code> instead
      */
+    @Deprecated
     @Override
     public List<CTRst> getItems() {
         throw new UnsupportedOperationException("TempFileSharedStringsTable only supports streaming access of shared strings");
