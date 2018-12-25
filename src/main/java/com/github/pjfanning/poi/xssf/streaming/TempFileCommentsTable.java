@@ -1,5 +1,6 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
@@ -17,11 +18,12 @@ import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 /**
  * Table of comments.
@@ -157,6 +159,38 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     public void close() {
         if(mvStore != null) mvStore.closeImmediately();
         if(tempFile != null) tempFile.delete();
+    }
+
+    /**
+     * Write this table out as XML.
+     *
+     * @param out The stream to write to.
+     * @throws IOException if an error occurs while writing.
+     */
+    public void writeTo(OutputStream out) throws IOException {
+        Writer writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+        try {
+            writer.write("<comments xmlns=\"");
+            writer.write(NS_SPREADSHEETML);
+            writer.write("\"><authors>");
+            for (String author : authors.values()) {
+                writer.write("<author>");
+                writer.write(StringEscapeUtils.escapeXml11(author));
+                writer.write("</author>");
+            }
+            writer.write("</authors>");
+            writer.write("<commentList>");
+            for (XSSFComment comment : comments.values()) {
+                writer.write("<comment><si>");
+                writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
+                writer.write("</si></comment>");
+            }
+            writer.write("</commentList>");
+            writer.write("</comments>");
+        } finally {
+            // do not close; let calling code close the output stream
+            writer.flush();
+        }
     }
 
     /**
