@@ -1,5 +1,6 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.util.CellAddress;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
  * properties, and phonetic properties (for East Asian languages).
  * </p>
  */
-public class TempFileCommentsTable implements Comments, AutoCloseable {
+public class TempFileCommentsTable extends POIXMLDocumentPart implements Comments, AutoCloseable {
     private File tempFile;
     private MVStore mvStore;
 

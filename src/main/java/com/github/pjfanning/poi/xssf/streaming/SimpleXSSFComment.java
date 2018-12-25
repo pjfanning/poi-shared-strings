@@ -1,9 +1,12 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import com.microsoft.schemas.vml.CTShape;
+import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 
 class SimpleXSSFComment extends XSSFComment {
 
@@ -96,5 +99,20 @@ class SimpleXSSFComment extends XSSFComment {
     @Override
     public void setString(String text) {
         this.text = text;
+    }
+
+    @Override
+    public ClientAnchor getClientAnchor() {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    @Override
+    protected CTComment getCTComment() {
+        throw new RuntimeException("Not Implemented");
+    }
+
+    @Override
+    protected CTShape getCTShape() {
+        throw new RuntimeException("Not Implemented");
     }
 }
