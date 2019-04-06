@@ -11,17 +11,21 @@ apply plugin: 'java'
 apply plugin: 'com.bmuschko.nexus'
 
 group = 'com.github.pjfanning'
-version = '1.0.1'
+version = '1.0.2-SNAPSHOT'
 
 description = 'Memory efficient Shared String Table for POI'
 
 repositories {
+    maven {
+        url 'https://repository.apache.org/content/repositories/staging'
+    }
     mavenCentral()
 }
 
 dependencies {
-    compile 'com.h2database:h2:1.4.197'
-    compile 'org.apache.poi:poi-ooxml:4.0.1'
+    compile 'com.h2database:h2:1.4.199'
+    compile 'org.apache.poi:poi-ooxml:4.1.0'
+    compile 'org.apache.commons:commons-text:1.6'
     testCompile 'junit:junit:4.12'
 }
 
