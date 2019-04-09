@@ -11,14 +11,11 @@ apply plugin: 'java'
 apply plugin: 'com.bmuschko.nexus'
 
 group = 'com.github.pjfanning'
-version = '1.0.2-SNAPSHOT'
+version = '1.0.2'
 
 description = 'Memory efficient Shared String Table for POI'
 
 repositories {
-    maven {
-        url 'https://repository.apache.org/content/repositories/staging'
-    }
     mavenCentral()
 }
 
