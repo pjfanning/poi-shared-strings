@@ -1,10 +1,15 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.poi.ooxml.util.DocumentHelper;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
 
@@ -29,6 +34,13 @@ public class TestTempFileCommentsTable {
             Assert.assertEquals("Sven Nissel", ct.getAuthor(0));
             Assert.assertEquals(1, ct.findAuthor("new-author"));
             Assert.assertEquals("new-author", ct.getAuthor(1));
+        }
+    }
+
+    @Test
+    public void testWriteOut() throws Exception {
+        try (TempFileCommentsTable commentsTable = new TempFileCommentsTable(true)) {
+
         }
     }
 }
