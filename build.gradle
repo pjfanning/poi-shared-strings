@@ -16,9 +16,6 @@ version = '1.0.4-SNAPSHOT'
 description = 'Memory efficient Shared String Table for POI'
 
 repositories {
-    maven {
-        url 'https://repository.apache.org/content/repositories/staging'
-    }
     mavenCentral()
 }
 
