@@ -21,7 +21,8 @@ repositories {
 
 dependencies {
     implementation 'com.h2database:h2:1.4.200'
-    //implementation 'org.apache.poi:poi-ooxml:4.1.2'
+    //implementation 'org.apache.poi:poi-ooxml:5.0.0'
+    implementation 'org.apache.xmlbeans:xmlbeans:4.0.0'
     implementation 'org.apache.commons:commons-collections4:4.4'
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-compress:1.20"
