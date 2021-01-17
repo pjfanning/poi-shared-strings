@@ -122,17 +122,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         }
     }
 
-    /**
-     * Return a string item by index
-     *
-     * @param idx index of item to return.
-     * @return the item at the specified position in this Shared String table.
-     * @deprecated use <code>getItemAt(int idx)</code> instead
-     * @throws NoSuchElementException if no item exists for this index
-     */
-    @Deprecated
-    @Override
-    public CTRst getEntryAt(int idx) {
+    private CTRst getEntryAt(int idx) {
         CTRst rst = strings.get(idx);
         if (rst == null) throw new NoSuchElementException();
         return rst;
@@ -173,21 +163,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         return uniqueCount;
     }
 
-    /**
-     * Add an entry to this Shared String table (a new value is appended to the end).
-     *
-     * <p>
-     * If the Shared String table already contains this <code>CTRst</code> bean, its index is returned.
-     * Otherwise a new entry is aded.
-     * </p>
-     *
-     * @param st the entry to add
-     * @return index the index of added entry
-     * @deprecated use <code>addSharedStringItem(RichTextString string)</code> instead
-     */
-    @Deprecated
-    @Override
-    public int addEntry(CTRst st) {
+    private int addEntry(CTRst st) {
         if (st == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
@@ -221,18 +197,6 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
         return addEntry(((XSSFRichTextString) string).getCTRst());
-    }
-
-    /**
-     * TempFileSharedStringsTable only supports streaming access of shared strings
-     *
-     * @return array of CTRst beans
-     * @deprecated use <code>getItemAt</code> instead
-     */
-    @Deprecated
-    @Override
-    public List<CTRst> getItems() {
-        throw new UnsupportedOperationException("TempFileSharedStringsTable only supports streaming access of shared strings");
     }
 
     /**
