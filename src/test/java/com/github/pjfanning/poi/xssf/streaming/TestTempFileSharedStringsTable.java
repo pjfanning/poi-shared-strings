@@ -55,6 +55,16 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
+    @Test
+    public void testReadOOXMLStrict() throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+            sst.readFrom(is);
+            Assert.assertEquals(15, sst.getCount());
+            Assert.assertEquals("Lorem", sst.getItemAt(0).getString());
+        }
+    }
+
     @Test(expected = NoSuchElementException.class)
     public void testReadMissingEntry() throws Exception {
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {

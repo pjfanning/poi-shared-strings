@@ -188,7 +188,6 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * </p>
      *
      * @param string the entry to add
-     * @since POI 4.0.0
      * @return index the index of added entry
      */
     @Override
