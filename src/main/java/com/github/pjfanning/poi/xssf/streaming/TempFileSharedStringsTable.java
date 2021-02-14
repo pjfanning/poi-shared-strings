@@ -18,9 +18,13 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
@@ -47,6 +51,9 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileSharedStringsTable extends SharedStringsTable {
+    private static Logger log = LoggerFactory.getLogger(TempFileSharedStringsTable.class);
+    private static QName COUNT_QNAME = new QName("count");
+    private static QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
     private File tempFile;
     private MVStore mvStore;
 
@@ -107,15 +114,47 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     @Override
     public void readFrom(InputStream is) throws IOException {
         try {
+            int uniqueCount = -1;
+            int count = -1;
             XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
 
             while(xmlEventReader.hasNext()) {
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-                if(xmlEvent.isStartElement() && xmlEvent.asStartElement().getName().getLocalPart().equals("si")) {
-                    String str = parseCT_Rst(xmlEventReader);
-                    addSharedStringItem(new XSSFRichTextString(str));
+                if(xmlEvent.isStartElement()) {
+                    String localPart = xmlEvent.asStartElement().getName().getLocalPart();
+                    if(localPart.equals("sst")) {
+                        try {
+                            Attribute countAtt = xmlEvent.asStartElement().getAttributeByName(COUNT_QNAME);
+                            if(countAtt != null) {
+                                count = Integer.parseInt(countAtt.getValue());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to parse SharedStringsTable count");
+                        }
+                        try {
+                            Attribute uniqueCountAtt = xmlEvent.asStartElement().getAttributeByName(UNIQUE_COUNT_QNAME);
+                            if(uniqueCountAtt != null) {
+                                uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to parse SharedStringsTable uniqueCount");
+                        }
+                    } else if(localPart.equals("si")) {
+                        String str = parseCT_Rst(xmlEventReader);
+                        addEntry(new XSSFRichTextString(str).getCTRst(), true);
+                    }
                 }
+            }
+            if (count > -1) {
+                this.count = count;
+            }
+            if (uniqueCount > -1) {
+                if (uniqueCount != this.uniqueCount) {
+                    log.warn("SharedStringsTable has uniqueCount={} but read {} entries. This will probably cause some cells to be misinterpreted.",
+                            uniqueCount, this.uniqueCount);
+                }
+                this.uniqueCount = uniqueCount;
             }
         } catch(XMLStreamException e) {
             throw new IOException(e);
@@ -163,13 +202,13 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         return uniqueCount;
     }
 
-    private int addEntry(CTRst st) {
+    private int addEntry(CTRst st, boolean keepDuplicates) {
         if (st == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
         String s = xmlText(st);
         count++;
-        if (stmap.containsKey(s)) {
+        if (!keepDuplicates && stmap.containsKey(s)) {
             return stmap.get(s);
         }
 
@@ -195,7 +234,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
-        return addEntry(((XSSFRichTextString) string).getCTRst());
+        return addEntry(((XSSFRichTextString) string).getCTRst(), false);
     }
 
     /**
