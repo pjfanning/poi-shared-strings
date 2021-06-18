@@ -20,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'org.slf4j:slf4j-api:1.7.31'
     implementation 'com.h2database:h2:1.4.200'
     implementation 'org.apache.poi:poi-ooxml:5.0.0'
     implementation 'org.apache.commons:commons-text:1.9'
