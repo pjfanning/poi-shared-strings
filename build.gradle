@@ -25,7 +25,7 @@ dependencies {
     implementation 'org.apache.poi:poi-ooxml:5.0.0'
     implementation 'org.apache.commons:commons-text:1.9'
     testImplementation 'junit:junit:4.13.2'
-    testRuntime 'org.slf4j:slf4j-simple:1.7.31'
+    testRuntime 'org.slf4j:slf4j-simple:1.7.32'
 }
 
 modifyPom {
