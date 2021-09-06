@@ -9,7 +9,6 @@ import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler.SheetContentsHandler;
 import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.model.StylesTable;
-import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -64,43 +63,6 @@ public class TestStreamingRead {
             throw new RuntimeException("SAX parser appears to be broken - " + e.getMessage());
         }
     }
-
-    private static class BasicSheetContentsHandler implements SheetContentsHandler {
-
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-
-        @Override
-        public void startRow(int rowNum) {
-            pw.println("Start Row " + rowNum);
-        }
-
-        @Override
-        public void endRow(int rowNum) {
-            pw.println("End Row " + rowNum);
-        }
-
-        @Override
-        public void cell(String cellReference, String formattedValue, XSSFComment comment) {
-            pw.print(cellReference);
-            pw.print(' ');
-            pw.print(formattedValue);
-            if (comment != null && comment.getString() != null) {
-                pw.print(" Comment=");
-                pw.print(comment.getString());
-            }
-            pw.println();
-        }
-
-        void println(String value) {
-            pw.println(value);
-        }
-
-        String getExtract() {
-            pw.close();
-            return sw.toString();
-        }
-    };
 
     private InputStream getResourceStream(String filename) {
         return TestStreamingRead.class.getClassLoader().getResourceAsStream(filename);
