@@ -3,13 +3,16 @@ package com.github.pjfanning.poi.xssf.streaming;
 import fi.iki.elonen.NanoHTTPD;
 import org.apache.poi.ooxml.util.PackageHelper;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler.SheetContentsHandler;
 import org.apache.poi.xssf.model.SharedStrings;
 import org.apache.poi.xssf.model.StylesTable;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Assert;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -21,6 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.util.function.Consumer;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class TestEntityExpansion {
@@ -45,6 +49,26 @@ public class TestEntityExpansion {
                     ++index;
                 }
                 Assert.assertEquals(getExpected(), handler.getExtract());
+            } catch (RuntimeException re) {
+                throw re;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Test
+    public void testXSSFEntityExpansion() {
+        ExploitServer.withServer(s -> fail("Should not have made request"), () -> {
+            try (InputStream is = getResourceStream("entity-expansion-exploit-poc-file.xlsx");
+                 XSSFWorkbook wb = new XSSFWorkbook(is)) {
+                for (int i = 0; i < wb.getNumberOfSheets(); i++) {
+                    for (Row row : wb.getSheetAt(i)) {
+                        for (Cell cell : row) {
+                            assertNotNull(cell.getCellType());
+                        }
+                    }
+                }
             } catch (RuntimeException re) {
                 throw re;
             } catch (Exception e) {
