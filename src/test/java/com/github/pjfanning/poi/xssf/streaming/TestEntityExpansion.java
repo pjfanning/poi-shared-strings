@@ -24,8 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class TestEntityExpansion {
 
@@ -69,6 +68,7 @@ public class TestEntityExpansion {
                         }
                     }
                 }
+                assertEquals(1, wb.getSharedStringSource().getCount());
             } catch (RuntimeException re) {
                 throw re;
             } catch (Exception e) {
