@@ -184,10 +184,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 writer.write("<comment ref=\"");
                 writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
                 writer.write("\" authorId=\"");
-                writer.write(findAuthor(comment.getAuthor()));
-                writer.write("\"><si>");
+                writer.write(Integer.toString(findAuthor(comment.getAuthor())));
+                writer.write("\"><text><t>");
                 writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
-                writer.write("</si></comment>");
+                writer.write("</t></text></comment>");
             }
             writer.write("</commentList>");
             writer.write("</comments>");

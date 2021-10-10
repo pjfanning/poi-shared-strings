@@ -62,6 +62,7 @@ public class TestTempFileCommentsTable {
             assertEquals(3, commentsTable.getNumberOfComments());
             commentsTable.writeTo(bos);
             try (TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false)) {
+                System.out.println(bos.toString("UTF-8"));
                 commentsTable2.readFrom(bos.toInputStream());
                 assertEquals(3, commentsTable2.getNumberOfComments());
                 List<CellAddress> addresses = IteratorUtils.toList(commentsTable2.getCellAddresses());
