@@ -10,6 +10,7 @@ import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
+import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 
@@ -185,9 +186,20 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
                 writer.write("\" authorId=\"");
                 writer.write(Integer.toString(findAuthor(comment.getAuthor())));
-                writer.write("\"><text><t>");
-                writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
-                writer.write("</t></text></comment>");
+                writer.write("\">");
+                XSSFRichTextString rts = comment.getString();
+                if (rts != null) {
+                    writer.write("<text>");
+                    if (rts.getCTRst() != null) {
+                        writer.write(rts.getCTRst().xmlText());
+                    } else {
+                        writer.write("<t>");
+                        writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
+                        writer.write("</t>");
+                    }
+                    writer.write("</text>");
+                }
+                writer.write("</comment>");
             }
             writer.write("</commentList>");
             writer.write("</comments>");
@@ -210,7 +222,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     text = TextParser.parseCT_Rst(xmlEventReader);
                     break;
                 default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
+                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
             }
         }
         return text;
