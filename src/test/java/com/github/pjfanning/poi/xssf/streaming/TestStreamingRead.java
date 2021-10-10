@@ -53,10 +53,10 @@ public class TestStreamingRead {
             InputStream sheetInputStream) throws IOException, SAXException {
         DataFormatter formatter = new DataFormatter();
         InputSource sheetSource = new InputSource(sheetInputStream);
-        try {
+        try (TempFileCommentsTable commentsTable = new TempFileCommentsTable(true)) {
             XMLReader sheetParser = XMLHelper.newXMLReader();
             ContentHandler handler = new XSSFSheetXMLHandler(
-                    styles, null, strings, sheetHandler, formatter, false);
+                    styles, commentsTable, strings, sheetHandler, formatter, false);
             sheetParser.setContentHandler(handler);
             sheetParser.parse(sheetSource);
         } catch(ParserConfigurationException e) {
