@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -119,9 +120,29 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             while(xmlEventReader.hasNext()) {
                 XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-                if(xmlEvent.isStartElement() && xmlEvent.asStartElement().getName().getLocalPart().equals("si")) {
-                    String str = TextParser.parseCT_Rst(xmlEventReader);
-                    addSharedStringItem(new XSSFRichTextString(str));
+                if(xmlEvent.isStartElement()) {
+                    String localPart = xmlEvent.asStartElement().getName().getLocalPart();
+                    if (localPart.equals("sst")) {
+                        try {
+                            Attribute countAtt = xmlEvent.asStartElement().getAttributeByName(COUNT_QNAME);
+                            if (countAtt != null) {
+                                count = Integer.parseInt(countAtt.getValue());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to parse SharedStringsTable count");
+                        }
+                        try {
+                            Attribute uniqueCountAtt = xmlEvent.asStartElement().getAttributeByName(UNIQUE_COUNT_QNAME);
+                            if (uniqueCountAtt != null) {
+                                uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to parse SharedStringsTable uniqueCount");
+                        }
+                    } else if (localPart.equals("si")) {
+                        String str = TextParser.parseCT_Rst(xmlEventReader);
+                        addEntry(new XSSFRichTextString(str).getCTRst(), true);
+                    }
                 }
             }
             if (count > -1) {
