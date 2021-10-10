@@ -16,10 +16,12 @@ repositories {
 dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'com.h2database:h2:1.4.200'
+    implementation 'org.apache.poi:poi:5.0.0'
     implementation 'org.apache.poi:poi-ooxml:5.0.0'
     implementation 'org.apache.commons:commons-text:1.9'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
+    testImplementation 'commons-io:commons-io:2.11.0'
     testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.32'
 }
 
