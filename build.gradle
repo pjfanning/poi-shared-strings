@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'signing'
     id 'maven-publish'
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
@@ -23,6 +24,11 @@ dependencies {
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'commons-io:commons-io:2.11.0'
     testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.32'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 nexusPublishing {
@@ -61,4 +67,11 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
 }
