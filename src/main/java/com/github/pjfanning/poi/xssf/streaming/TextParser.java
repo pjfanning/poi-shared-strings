@@ -28,7 +28,7 @@ class TextParser {
                     skipElement(xmlEventReader);
                     break;
                 default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
+                    throw new IllegalArgumentException("Unexpected start element: " + xmlEvent.asStartElement().getName().getLocalPart());
             }
         }
         return buf.toString();
@@ -51,7 +51,7 @@ class TextParser {
                     skipElement(xmlEventReader);
                     break;
                 default:
-                    throw new IllegalArgumentException(xmlEvent.asStartElement().getName().getLocalPart());
+                    throw new IllegalArgumentException("Unexpected start element: " + xmlEvent.asStartElement().getName().getLocalPart());
             }
         }
     }
