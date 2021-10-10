@@ -1,8 +1,14 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.poi.util.XMLHelper;
+
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
+import java.io.IOException;
+import java.io.StringWriter;
 
 class TextParser {
 
@@ -55,6 +61,22 @@ class TextParser {
             }
         }
     }
+
+    static String getXMLText(XMLEventReader xmlEventReader, QName endTag) throws IOException, XMLStreamException {
+        try (StringWriter sw = new StringWriter()) {
+            XMLEventWriter xew = XMLHelper.newXMLOutputFactory().createXMLEventWriter(sw);
+            try {
+                XMLEvent event = xmlEventReader.nextEvent();
+                while (event != null && !(event.isEndElement() && event.asEndElement().getName().equals(endTag))) {
+                    xew.add(event);
+                }
+            } finally {
+                xew.close();
+            }
+            return sw.toString();
+        }
+    }
+
 
     private static void skipElement(XMLEventReader xmlEventReader) throws XMLStreamException {
         // Precondition: pointing to start element;  Post condition: pointing to end element

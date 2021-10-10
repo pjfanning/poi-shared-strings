@@ -13,10 +13,10 @@ import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
@@ -99,7 +99,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     } else if(se.getName().getLocalPart().equals("comment")) {
                         String ref = se.getAttributeByName(new QName("ref")).getValue();
                         String authorId = se.getAttributeByName(new QName("authorId")).getValue();
-                        String str = parseComment(xmlEventReader);
+                        XSSFRichTextString str = parseComment(xmlEventReader);
                         XSSFComment xc = new SimpleXSSFComment();
                         xc.setAddress(new CellAddress(ref));
                         xc.setAuthor(authors.get(Integer.parseInt(authorId)));
@@ -108,8 +108,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     }
                 }
             }
-        } catch(XMLStreamException e) {
-            throw new IOException(e);
+        } catch(IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Failed to parse comment", e);
         }
     }
 
@@ -209,22 +211,22 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         }
     }
 
-    /**
-     * Parses a {@code <comment>} Comment. Returns just the text and drops the formatting.
-     */
-    private String parseComment(XMLEventReader xmlEventReader) throws XMLStreamException {
+    private XSSFRichTextString parseComment(XMLEventReader xmlEventReader) throws Exception {
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
-        String text = null;
+        XSSFRichTextString richTextString = null;
         while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
+            QName startTag = xmlEvent.asStartElement().getName();
+            switch(startTag.getLocalPart()) {
                 case "text":
-                    text = TextParser.parseCT_Rst(xmlEventReader);
+                    String text = TextParser.getXMLText(xmlEventReader, startTag);
+                    CTRst rst = CTRst.Factory.parse(text);
+                    richTextString = new XSSFRichTextString(rst);
                     break;
                 default:
                     throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
             }
         }
-        return text;
+        return richTextString;
     }
 }
