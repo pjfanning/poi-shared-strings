@@ -11,7 +11,10 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.XMLEvent;
@@ -46,6 +49,9 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileSharedStringsTable extends SharedStringsTable {
+    private static Logger log = LoggerFactory.getLogger(TempFileSharedStringsTable.class);
+    private static QName COUNT_QNAME = new QName("count");
+    private static QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
     private File tempFile;
     private MVStore mvStore;
 
@@ -106,6 +112,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     @Override
     public void readFrom(InputStream is) throws IOException {
         try {
+            int uniqueCount = -1;
+            int count = -1;
             XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
 
             while(xmlEventReader.hasNext()) {
@@ -116,22 +124,22 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                     addSharedStringItem(new XSSFRichTextString(str));
                 }
             }
+            if (count > -1) {
+                this.count = count;
+            }
+            if (uniqueCount > -1) {
+                if (uniqueCount != this.uniqueCount) {
+                    log.warn("SharedStringsTable has uniqueCount={} but read {} entries. This will probably cause some cells to be misinterpreted.",
+                            uniqueCount, this.uniqueCount);
+                }
+                this.uniqueCount = uniqueCount;
+            }
         } catch(XMLStreamException e) {
             throw new IOException(e);
         }
     }
 
-    /**
-     * Return a string item by index
-     *
-     * @param idx index of item to return.
-     * @return the item at the specified position in this Shared String table.
-     * @deprecated use <code>getItemAt(int idx)</code> instead
-     * @throws NoSuchElementException if no item exists for this index
-     */
-    @Deprecated
-    @Override
-    public CTRst getEntryAt(int idx) {
+    private CTRst getEntryAt(int idx) {
         CTRst rst = strings.get(idx);
         if (rst == null) throw new NoSuchElementException();
         return rst;
@@ -172,27 +180,13 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         return uniqueCount;
     }
 
-    /**
-     * Add an entry to this Shared String table (a new value is appended to the end).
-     *
-     * <p>
-     * If the Shared String table already contains this <code>CTRst</code> bean, its index is returned.
-     * Otherwise a new entry is aded.
-     * </p>
-     *
-     * @param st the entry to add
-     * @return index the index of added entry
-     * @deprecated use <code>addSharedStringItem(RichTextString string)</code> instead
-     */
-    @Deprecated
-    @Override
-    public int addEntry(CTRst st) {
+    private int addEntry(CTRst st, boolean keepDuplicates) {
         if (st == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
         String s = xmlText(st);
         count++;
-        if (stmap.containsKey(s)) {
+        if (!keepDuplicates && stmap.containsKey(s)) {
             return stmap.get(s);
         }
 
@@ -211,7 +205,6 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * </p>
      *
      * @param string the entry to add
-     * @since POI 4.0.0
      * @return index the index of added entry
      */
     @Override
@@ -219,19 +212,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
-        return addEntry(((XSSFRichTextString) string).getCTRst());
-    }
-
-    /**
-     * TempFileSharedStringsTable only supports streaming access of shared strings
-     *
-     * @return array of CTRst beans
-     * @deprecated use <code>getItemAt</code> instead
-     */
-    @Deprecated
-    @Override
-    public List<CTRst> getItems() {
-        throw new UnsupportedOperationException("TempFileSharedStringsTable only supports streaming access of shared strings");
+        return addEntry(((XSSFRichTextString) string).getCTRst(), false);
     }
 
     /**

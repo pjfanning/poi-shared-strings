@@ -2,7 +2,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings)
 
 # poi-shared-strings
-Memory efficient Shared Strings Table implementation for [POI](https://poi.apache.org/) xlsx streaming. Supports read and write use cases when used with POI 4.0.
+Memory efficient Shared Strings Table implementation for [POI](https://poi.apache.org/) xlsx streaming. Supports read and write use cases when used with POI 5.x. poi-shared-strings 1.x supports POI 4.x.
 
 https://bz.apache.org/bugzilla/show_bug.cgi?id=61832
 

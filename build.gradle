@@ -1,17 +1,11 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-    }
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
-apply plugin: 'java'
-apply plugin: 'com.bmuschko.nexus'
-
 group = 'com.github.pjfanning'
-version = '1.0.5-SNAPSHOT'
+version = '2.0.2-SNAPSHOT'
 
 description = 'Memory efficient Shared String Table for POI'
 
@@ -20,81 +14,47 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'com.h2database:h2:1.4.200'
-    implementation 'org.apache.poi:poi-ooxml:4.1.2'
-    implementation 'org.apache.commons:commons-text:1.8'
-    testImplementation 'junit:junit:4.13'
+    implementation 'org.apache.poi:poi-ooxml:5.0.0'
+    implementation 'org.apache.commons:commons-text:1.9'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.32'
 }
 
-modifyPom {
-    project {
-        name 'POI Shared Strings'
-        description 'Memory efficient Shared Strings Table implementation for POI streaming'
-        url 'https://github.com/pjfanning/poi-shared-strings'
-        inceptionYear '2018'
-
-        scm {
-            url 'https://github.com/pjfanning/poi-shared-strings'
-            connection 'scm:git://github.com/pjfanning/poi-shared-strings.git'
-            developerConnection 'scm:git://github.com/pjfanning/poi-shared-strings.git'
-        }
-
-        licenses {
-            license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                distribution 'repo'
-            }
-        }
-
-        developers {
-            developer {
-                id 'pjfanning'
-                name 'PJ Fanning'
-            }
-        }
+nexusPublishing {
+    repositories {
+        sonatype()
     }
 }
 
-def customizePom(pom) {
-    pom.withXml {
-        def root = asNode()
-
-        // eliminate test-scoped dependencies (no need in maven central POMs)
-        root.dependencies.removeAll { dep ->
-            dep.scope == "test"
-        }
-
-        // add all items necessary for maven central publication
-        root.children().last() + {
-            resolveStrategy = Closure.DELEGATE_FIRST
-
-            description 'Memory efficient Shared Strings Table implementation for POI streaming'
-            name 'POI Shared Strings'
-            url 'https://github.com/pjfanning/poi-shared-strings'
-            organization {
-                name 'com.github.pjfanning'
-                url 'https://github.com/pjfanning'
-            }
-            issueManagement {
-                system 'GitHub'
-                url 'https://github.com/pjfanning/poi-shared-strings/issues'
-            }
-            licenses {
-                license {
-                    name 'The Apache License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from(components.java)
+            pom {
+                name = 'POI Shared Strings'
+                description = 'Memory efficient Shared Strings Table implementation for POI streaming'
+                url = 'https://github.com/pjfanning/poi-shared-strings'
+                inceptionYear = '2018'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
                 }
-            }
-            scm {
-                url 'https://github.com/pjfanning/poi-shared-strings'
-                connection 'scm:git:git://github.com/pjfanning/poi-shared-strings.git'
-                developerConnection 'scm:git:ssh://git@github.com:pjfanning/poi-shared-strings.git'
-            }
-            developers {
-                developer {
-                    id 'pjfanning'
-                    name 'PJ Fanning'
+                developers {
+                    developer {
+                        id = 'pjfanning'
+                        name = 'PJ Fanning'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/pjfanning/poi-shared-strings'
+                    connection = 'scm:git://github.com/pjfanning/poi-shared-strings.git'
+                    developerConnection = 'scm:git://github.com/pjfanning/poi-shared-strings.git'
                 }
             }
         }
