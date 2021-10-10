@@ -11,7 +11,7 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 class SimpleXSSFComment extends XSSFComment {
 
     private String author;
-    private String text;
+    private XSSFRichTextString richTextString;
     private CellAddress address;
     private boolean visible = true;
 
@@ -88,17 +88,22 @@ class SimpleXSSFComment extends XSSFComment {
 
     @Override
     public XSSFRichTextString getString() {
-        return new XSSFRichTextString(text);
+        return richTextString;
     }
 
     @Override
     public void setString(RichTextString string) {
-        setString(string.getString());
+        if(!(string instanceof XSSFRichTextString)){
+            throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
+        }
+        this.richTextString = (XSSFRichTextString)string;
     }
 
     @Override
     public void setString(String text) {
-        this.text = text;
+        XSSFRichTextString rts = new XSSFRichTextString();
+        rts.setString(text);
+        this.richTextString = rts;
     }
 
     @Override
