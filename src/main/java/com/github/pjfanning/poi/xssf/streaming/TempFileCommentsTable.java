@@ -88,25 +88,28 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     public void readFrom(InputStream is) throws IOException {
         try {
             XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
+            try {
+                while(xmlEventReader.hasNext()) {
+                    XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-            while(xmlEventReader.hasNext()) {
-                XMLEvent xmlEvent = xmlEventReader.nextEvent();
-
-                if(xmlEvent.isStartElement()) {
-                    StartElement se = xmlEvent.asStartElement();
-                    if(se.getName().getLocalPart().equals("author")) {
-                        authors.put(getNumberOfAuthors(), xmlEventReader.getElementText());
-                    } else if(se.getName().getLocalPart().equals("comment")) {
-                        String ref = se.getAttributeByName(new QName("ref")).getValue();
-                        String authorId = se.getAttributeByName(new QName("authorId")).getValue();
-                        String str = parseComment(xmlEventReader);
-                        XSSFComment xc = new SimpleXSSFComment();
-                        xc.setAddress(new CellAddress(ref));
-                        xc.setAuthor(authors.get(Integer.parseInt(authorId)));
-                        xc.setString(str);
-                        comments.put(ref, xc);
+                    if (xmlEvent.isStartElement()) {
+                        StartElement se = xmlEvent.asStartElement();
+                        if (se.getName().getLocalPart().equals("author")) {
+                            authors.put(getNumberOfAuthors(), xmlEventReader.getElementText());
+                        } else if (se.getName().getLocalPart().equals("comment")) {
+                            String ref = se.getAttributeByName(new QName("ref")).getValue();
+                            String authorId = se.getAttributeByName(new QName("authorId")).getValue();
+                            String str = parseComment(xmlEventReader);
+                            XSSFComment xc = new SimpleXSSFComment();
+                            xc.setAddress(new CellAddress(ref));
+                            xc.setAuthor(authors.get(Integer.parseInt(authorId)));
+                            xc.setString(str);
+                            comments.put(ref, xc);
+                        }
                     }
                 }
+            } finally {
+                xmlEventReader.close();
             }
         } catch(XMLStreamException e) {
             throw new IOException(e);

@@ -116,44 +116,47 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             int uniqueCount = -1;
             int count = -1;
             XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
+            try {
+                while(xmlEventReader.hasNext()) {
+                    XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-            while(xmlEventReader.hasNext()) {
-                XMLEvent xmlEvent = xmlEventReader.nextEvent();
-
-                if(xmlEvent.isStartElement()) {
-                    String localPart = xmlEvent.asStartElement().getName().getLocalPart();
-                    if (localPart.equals("sst")) {
-                        try {
-                            Attribute countAtt = xmlEvent.asStartElement().getAttributeByName(COUNT_QNAME);
-                            if (countAtt != null) {
-                                count = Integer.parseInt(countAtt.getValue());
+                    if (xmlEvent.isStartElement()) {
+                        String localPart = xmlEvent.asStartElement().getName().getLocalPart();
+                        if (localPart.equals("sst")) {
+                            try {
+                                Attribute countAtt = xmlEvent.asStartElement().getAttributeByName(COUNT_QNAME);
+                                if (countAtt != null) {
+                                    count = Integer.parseInt(countAtt.getValue());
+                                }
+                            } catch (Exception e) {
+                                log.warn("Failed to parse SharedStringsTable count");
                             }
-                        } catch (Exception e) {
-                            log.warn("Failed to parse SharedStringsTable count");
-                        }
-                        try {
-                            Attribute uniqueCountAtt = xmlEvent.asStartElement().getAttributeByName(UNIQUE_COUNT_QNAME);
-                            if (uniqueCountAtt != null) {
-                                uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
+                            try {
+                                Attribute uniqueCountAtt = xmlEvent.asStartElement().getAttributeByName(UNIQUE_COUNT_QNAME);
+                                if (uniqueCountAtt != null) {
+                                    uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
+                                }
+                            } catch (Exception e) {
+                                log.warn("Failed to parse SharedStringsTable uniqueCount");
                             }
-                        } catch (Exception e) {
-                            log.warn("Failed to parse SharedStringsTable uniqueCount");
+                        } else if (localPart.equals("si")) {
+                            String str = TextParser.parseCT_Rst(xmlEventReader);
+                            addEntry(new XSSFRichTextString(str).getCTRst(), true);
                         }
-                    } else if (localPart.equals("si")) {
-                        String str = TextParser.parseCT_Rst(xmlEventReader);
-                        addEntry(new XSSFRichTextString(str).getCTRst(), true);
                     }
                 }
-            }
-            if (count > -1) {
-                this.count = count;
-            }
-            if (uniqueCount > -1) {
-                if (uniqueCount != this.uniqueCount) {
-                    log.warn("SharedStringsTable has uniqueCount={} but read {} entries. This will probably cause some cells to be misinterpreted.",
-                            uniqueCount, this.uniqueCount);
+                if (count > -1) {
+                    this.count = count;
                 }
-                this.uniqueCount = uniqueCount;
+                if (uniqueCount > -1) {
+                    if (uniqueCount != this.uniqueCount) {
+                        log.warn("SharedStringsTable has uniqueCount={} but read {} entries. This will probably cause some cells to be misinterpreted.",
+                                uniqueCount, this.uniqueCount);
+                    }
+                    this.uniqueCount = uniqueCount;
+                }
+            } finally {
+                xmlEventReader.close();
             }
         } catch(XMLStreamException e) {
             throw new IOException(e);
