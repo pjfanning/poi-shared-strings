@@ -14,7 +14,7 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.xmlbeans.XmlException;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.*;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -103,7 +103,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                             String authorId = se.getAttributeByName(new QName("authorId")).getValue();
                             XSSFRichTextString str;
                             try {
-                                str = parseComment(xmlEventReader);
+                                str = parseComment(xmlEventReader, se.getName());
                             } catch (XmlException e) {
                                 throw new IOException("Failed to parse comment", e);
                             }
@@ -219,17 +219,19 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         }
     }
 
-    private XSSFRichTextString parseComment(XMLEventReader xmlEventReader) throws IOException, XmlException, XMLStreamException {
+    private XSSFRichTextString parseComment(XMLEventReader xmlEventReader, QName commentTag) throws IOException, XmlException, XMLStreamException {
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
         XSSFRichTextString richTextString = null;
         while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            QName startTag = xmlEvent.asStartElement().getName();
+            StartElement startElement = xmlEvent.asStartElement();
+            QName startTag = startElement.getName();
             switch(startTag.getLocalPart()) {
                 case "text":
-                    String text = TextParser.getXMLText(xmlEventReader, startTag);
-                    CTRst rst = CTRst.Factory.parse(text);
-                    richTextString = new XSSFRichTextString(rst);
+                    List<String> tags = Arrays.asList(new String[]{"comments", "commentList", "comment", "text"});
+                    String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                    CTCommentList comments = CommentsDocument.Factory.parse(text).getComments().getCommentList();
+                    richTextString = new XSSFRichTextString(comments.getCommentArray(0).getText());
                     break;
                 default:
                     throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());

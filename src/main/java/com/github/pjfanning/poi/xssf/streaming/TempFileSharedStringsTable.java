@@ -12,6 +12,8 @@ import org.apache.xmlbeans.XmlException;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTSst;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.SstDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,13 +21,11 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -122,11 +122,12 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
                     if(xmlEvent.isStartElement()) {
-                        QName startTag = xmlEvent.asStartElement().getName();
+                        StartElement startElement = xmlEvent.asStartElement();
+                        QName startTag = startElement.getName();
                         String localPart = startTag.getLocalPart();
                         if (localPart.equals("sst")) {
                             try {
-                                Attribute countAtt = xmlEvent.asStartElement().getAttributeByName(COUNT_QNAME);
+                                Attribute countAtt = startElement.getAttributeByName(COUNT_QNAME);
                                 if (countAtt != null) {
                                     count = Integer.parseInt(countAtt.getValue());
                                 }
@@ -134,7 +135,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                 log.warn("Failed to parse SharedStringsTable count");
                             }
                             try {
-                                Attribute uniqueCountAtt = xmlEvent.asStartElement().getAttributeByName(UNIQUE_COUNT_QNAME);
+                                Attribute uniqueCountAtt = startElement.getAttributeByName(UNIQUE_COUNT_QNAME);
                                 if (uniqueCountAtt != null) {
                                     uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
                                 }
@@ -142,14 +143,15 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                 log.warn("Failed to parse SharedStringsTable uniqueCount");
                             }
                         } else if (localPart.equals("si")) {
-                            String text = TextParser.getXMLText(xmlEventReader, startTag);
-                            CTRst rst;
+                            List<String> tags = Arrays.asList(new String[]{"sst", "si"});
+                            String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                            CTSst sst;
                             try {
-                                rst = CTRst.Factory.parse(text);
+                                sst = SstDocument.Factory.parse(text).getSst();
                             } catch (XmlException e) {
                                 throw new IOException("Failed to parse shared string text", e);
                             }
-                            addEntry(new XSSFRichTextString(rst).getCTRst(), true);
+                            addEntry(new XSSFRichTextString(sst.getSiArray(0)).getCTRst(), true);
                         }
                     }
                 }

@@ -11,21 +11,33 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collections;
+import java.util.List;
+import java.util.ListIterator;
+
+import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 class TextParser {
 
-    static String getXMLText(XMLEventReader xmlEventReader, QName tag) throws IOException, XMLStreamException {
+    static String getXMLText(XMLEventReader xmlEventReader, QName tag, List<String> wrappingTags) throws IOException, XMLStreamException {
         XMLEventFactory xef = XMLHelper.newXMLEventFactory();
         try (StringWriter sw = new StringWriter()) {
             XMLEventWriter xew = XMLHelper.newXMLOutputFactory().createXMLEventWriter(sw);
-            xew.add(xef.createStartElement(tag, Collections.emptyIterator(), Collections.emptyIterator()));
             try {
+                for (String tagName : wrappingTags) {
+                    xew.add(xef.createStartElement(new QName(NS_SPREADSHEETML, tagName),
+                            Collections.emptyIterator(), Collections.emptyIterator()));
+                }
                 XMLEvent event = xmlEventReader.nextEvent();
                 while (event != null && !(event.isEndElement() && event.asEndElement().getName().equals(tag))) {
                     xew.add(event);
                     event = xmlEventReader.nextEvent();
                 }
-                xew.add(xef.createEndElement(tag, Collections.emptyIterator()));
+                ListIterator<String> tagIter = wrappingTags.listIterator();
+                while (tagIter.hasPrevious()) {
+                    String tagName = tagIter.previous();
+                    xew.add(xef.createEndElement(new QName(NS_SPREADSHEETML, tagName),
+                            Collections.emptyIterator()));
+                }
             } finally {
                 xew.close();
             }
