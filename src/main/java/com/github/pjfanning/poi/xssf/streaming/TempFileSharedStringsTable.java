@@ -121,7 +121,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                 while(xmlEventReader.hasNext()) {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-                    if(xmlEvent.isStartElement()) {
+                    if (xmlEvent.isStartElement()) {
                         StartElement startElement = xmlEvent.asStartElement();
                         QName startTag = startElement.getName();
                         String localPart = startTag.getLocalPart();

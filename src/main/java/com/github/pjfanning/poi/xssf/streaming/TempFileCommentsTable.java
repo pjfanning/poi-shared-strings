@@ -94,11 +94,11 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 while(xmlEventReader.hasNext()) {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-                    if(xmlEvent.isStartElement()) {
+                    if (xmlEvent.isStartElement()) {
                         StartElement se = xmlEvent.asStartElement();
-                        if(se.getName().getLocalPart().equals("author")) {
+                        if (se.getName().getLocalPart().equals("author")) {
                             authors.put(getNumberOfAuthors(), xmlEventReader.getElementText());
-                        } else if(se.getName().getLocalPart().equals("comment")) {
+                        } else if (se.getName().getLocalPart().equals("comment")) {
                             String ref = se.getAttributeByName(new QName("ref")).getValue();
                             String authorId = se.getAttributeByName(new QName("authorId")).getValue();
                             XSSFRichTextString str;
