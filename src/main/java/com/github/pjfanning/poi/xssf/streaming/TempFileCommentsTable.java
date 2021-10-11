@@ -11,12 +11,14 @@ import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.xmlbeans.XmlException;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
@@ -88,30 +90,36 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     public void readFrom(InputStream is) throws IOException {
         try {
             XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
+            try {
+                while(xmlEventReader.hasNext()) {
+                    XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
-            while(xmlEventReader.hasNext()) {
-                XMLEvent xmlEvent = xmlEventReader.nextEvent();
-
-                if(xmlEvent.isStartElement()) {
-                    StartElement se = xmlEvent.asStartElement();
-                    if(se.getName().getLocalPart().equals("author")) {
-                        authors.put(getNumberOfAuthors(), xmlEventReader.getElementText());
-                    } else if(se.getName().getLocalPart().equals("comment")) {
-                        String ref = se.getAttributeByName(new QName("ref")).getValue();
-                        String authorId = se.getAttributeByName(new QName("authorId")).getValue();
-                        XSSFRichTextString str = parseComment(xmlEventReader);
-                        XSSFComment xc = new SimpleXSSFComment();
-                        xc.setAddress(new CellAddress(ref));
-                        xc.setAuthor(authors.get(Integer.parseInt(authorId)));
-                        xc.setString(str);
-                        comments.put(ref, xc);
+                    if(xmlEvent.isStartElement()) {
+                        StartElement se = xmlEvent.asStartElement();
+                        if(se.getName().getLocalPart().equals("author")) {
+                            authors.put(getNumberOfAuthors(), xmlEventReader.getElementText());
+                        } else if(se.getName().getLocalPart().equals("comment")) {
+                            String ref = se.getAttributeByName(new QName("ref")).getValue();
+                            String authorId = se.getAttributeByName(new QName("authorId")).getValue();
+                            XSSFRichTextString str;
+                            try {
+                                str = parseComment(xmlEventReader);
+                            } catch (XmlException e) {
+                                throw new IOException("Failed to parse comment", e);
+                            }
+                            XSSFComment xc = new SimpleXSSFComment();
+                            xc.setAddress(new CellAddress(ref));
+                            xc.setAuthor(authors.get(Integer.parseInt(authorId)));
+                            xc.setString(str);
+                            comments.put(ref, xc);
+                        }
                     }
                 }
+            } finally{
+                xmlEventReader.close();
             }
-        } catch(IOException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IOException("Failed to parse comment", e);
+        } catch (XMLStreamException xse) {
+            throw new IOException("Failed to parse comments", xse);
         }
     }
 
@@ -211,7 +219,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         }
     }
 
-    private XSSFRichTextString parseComment(XMLEventReader xmlEventReader) throws Exception {
+    private XSSFRichTextString parseComment(XMLEventReader xmlEventReader) throws IOException, XmlException, XMLStreamException {
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
         XSSFRichTextString richTextString = null;
