@@ -158,8 +158,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             } finally {
                 xmlEventReader.close();
             }
-        } catch(XMLStreamException e) {
-            throw new IOException(e);
+        } catch(XMLStreamException xse) {
+            throw new IOException("Failed to parse shared strings", xse);
         }
     }
 

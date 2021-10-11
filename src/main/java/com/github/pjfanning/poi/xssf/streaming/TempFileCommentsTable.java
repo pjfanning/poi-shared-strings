@@ -112,7 +112,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 xmlEventReader.close();
             }
         } catch(XMLStreamException e) {
-            throw new IOException(e);
+            throw new IOException("Failed to parse comments", e);
         }
     }
 
