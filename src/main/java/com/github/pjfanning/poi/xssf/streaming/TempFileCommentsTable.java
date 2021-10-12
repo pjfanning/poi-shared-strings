@@ -14,7 +14,8 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.xmlbeans.XmlException;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.*;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;

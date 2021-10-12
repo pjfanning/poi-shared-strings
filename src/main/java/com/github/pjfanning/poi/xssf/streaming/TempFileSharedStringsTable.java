@@ -56,6 +56,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     private static QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
     private File tempFile;
     private MVStore mvStore;
+    private final boolean fullFormat;
 
     /**
      *  Array of individual string items in the Shared String table.
@@ -68,11 +69,16 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     private final MVMap<String, Integer> stmap;
 
     public TempFileSharedStringsTable() {
-        this(false);
+        this(false, false);
     }
 
     public TempFileSharedStringsTable(boolean encryptTempFiles) {
+        this(encryptTempFiles, false);
+    }
+
+    public TempFileSharedStringsTable(boolean encryptTempFiles, boolean fullFormat) {
         super();
+        this.fullFormat = fullFormat;
         try {
             tempFile = TempFile.createTempFile("poi-shared-strings", ".tmp");
             MVStore.Builder mvStoreBuilder = new MVStore.Builder();
@@ -97,7 +103,12 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     }
 
     public TempFileSharedStringsTable(OPCPackage pkg, boolean encryptTempFiles) throws IOException {
-        this(encryptTempFiles);
+        this(pkg, encryptTempFiles, false);
+    }
+
+    public TempFileSharedStringsTable(OPCPackage pkg, boolean encryptTempFiles,
+                                      boolean fullFormat) throws IOException {
+        this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
         if (parts.size() > 0) {
             PackagePart sstPart = parts.get(0);
@@ -143,15 +154,20 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                 log.warn("Failed to parse SharedStringsTable uniqueCount");
                             }
                         } else if (localPart.equals("si")) {
-                            List<String> tags = Arrays.asList(new String[]{"sst", "si"});
-                            String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
-                            CTSst sst;
-                            try {
-                                sst = SstDocument.Factory.parse(text).getSst();
-                            } catch (XmlException e) {
-                                throw new IOException("Failed to parse shared string text", e);
+                            if (fullFormat) {
+                                List<String> tags = Arrays.asList(new String[]{"sst", "si"});
+                                String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                                CTSst sst;
+                                try {
+                                    sst = SstDocument.Factory.parse(text).getSst();
+                                } catch (XmlException e) {
+                                    throw new IOException("Failed to parse shared string text", e);
+                                }
+                                addEntry(new XSSFRichTextString(sst.getSiArray(0)).getCTRst(), true);
+                            } else {
+                                String text = TextParser.parseCT_Rst(xmlEventReader);
+                                addEntry(new XSSFRichTextString(text).getCTRst(), true);
                             }
-                            addEntry(new XSSFRichTextString(sst.getSiArray(0)).getCTRst(), true);
                         }
                     }
                 }
