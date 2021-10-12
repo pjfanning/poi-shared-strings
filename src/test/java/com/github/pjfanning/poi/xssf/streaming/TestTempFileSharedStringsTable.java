@@ -1,6 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
@@ -10,6 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TestTempFileSharedStringsTable {
     @Test
@@ -83,15 +85,20 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testWrite() throws Exception {
-        testWrite(10);
+        testWrite(10, false);
     }
 
-    private void testWrite(int size) throws Exception {
+    @Test
+    public void testWriteFullFormat() throws Exception {
+        testWrite(10, true);
+    }
+
+    private void testWrite(int size, boolean fullFormat) throws Exception {
         java.util.Random rnd = new java.util.Random();
         byte[] bytes = new byte[1028];
         try (
                 UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
-                TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)
+                TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)
         ) {
             for (int i = 0; i < size; i++) {
                 rnd.nextBytes(bytes);
@@ -99,7 +106,9 @@ public class TestTempFileSharedStringsTable {
                 sst.addSharedStringItem(new XSSFRichTextString(rndString));
             }
             sst.writeTo(bos);
-            try(TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+            String out = bos.toString(StandardCharsets.UTF_8);
+            assertFalse("sst output should not contain xml-fragment", out.contains("xml-fragment"));
+            try(TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true, fullFormat)) {
                 sst2.readFrom(bos.toInputStream());
                 assertEquals(size, sst2.getCount());
             }
