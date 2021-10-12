@@ -15,9 +15,52 @@ public class TestTempFileCommentsTable {
 
     @Test
     public void testReadXML() throws Exception {
+        testReadXML(false, false);
+    }
+
+    @Test
+    public void testReadXMLWithEncryptedTempFile() throws Exception {
+        testReadXML(true, false);
+    }
+
+    @Test
+    public void testReadXMLWithFullFormat() throws Exception {
+        testReadXML(false, true);
+    }
+
+    @Test
+    public void testWriteEmpty() throws Exception {
+        try (
+                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(true)
+        ) {
+            commentsTable.writeTo(bos);
+            try (TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false)) {
+                commentsTable2.readFrom(bos.toInputStream());
+                assertEquals(0, commentsTable2.getNumberOfComments());
+            }
+        }
+    }
+
+    @Test
+    public void testWrite() throws Exception {
+        testWrite(false, false);
+    }
+
+    @Test
+    public void testWriteWithEncryptedTempFile() throws Exception {
+        testWrite(true, false);
+    }
+
+    @Test
+    public void testWriteWithFullFormat() throws Exception {
+        testWrite(false, true);
+    }
+
+    private void testReadXML(boolean encrypt, boolean fullFormat) throws Exception {
         try (
                 InputStream is = TestTempFileCommentsTable.class.getClassLoader().getResourceAsStream("comments1.xml");
-                TempFileCommentsTable ct = new TempFileCommentsTable(true)
+                TempFileCommentsTable ct = new TempFileCommentsTable(encrypt, fullFormat)
         ) {
             ct.readFrom(is);
             assertEquals(3, ct.getNumberOfComments());
@@ -37,26 +80,11 @@ public class TestTempFileCommentsTable {
         }
     }
 
-    @Test
-    public void testWriteEmpty() throws Exception {
-        try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
-                TempFileCommentsTable commentsTable = new TempFileCommentsTable(true)
-        ) {
-            commentsTable.writeTo(bos);
-            try (TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false)) {
-                commentsTable2.readFrom(bos.toInputStream());
-                assertEquals(0, commentsTable2.getNumberOfComments());
-            }
-        }
-    }
-
-    @Test
-    public void testWrite() throws Exception {
+    private void testWrite(boolean encrypt, boolean fullFormat) throws Exception {
         try (
                 UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
                 InputStream is = TestTempFileCommentsTable.class.getClassLoader().getResourceAsStream("comments1.xml");
-                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false)
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(encrypt, fullFormat)
         ) {
             commentsTable.readFrom(is);
             assertEquals(3, commentsTable.getNumberOfComments());
@@ -80,4 +108,5 @@ public class TestTempFileCommentsTable {
             }
         }
     }
+
 }
