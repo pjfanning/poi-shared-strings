@@ -15,7 +15,7 @@ It is only useful if you expect to need to support large numbers of shared strin
 
 ## Comments Table
 
-v2.1.2 added support for `TempFileCommentsTable` which works in a similar way to `TempFileSharedStringsTable`.
+v2.0.2 added support for `TempFileCommentsTable` which works in a similar way to `TempFileSharedStringsTable`.
 
 This class can be used instead of the POI [CommentsTable](https://poi.apache.org/apidocs/dev/org/apache/poi/xssf/model/CommentsTable.html).
 It is only useful if you expect to need to support large numbers of comments entries.
