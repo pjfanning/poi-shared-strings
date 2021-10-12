@@ -3,16 +3,10 @@ package com.github.pjfanning.poi.xssf.streaming;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -39,7 +33,7 @@ public class TestSXSSFWorkbookWithTempFileSharedStringsTable {
             row.createCell(1).setCellValue("B");
             row.createCell(2).setCellValue("A");
 
-            XSSFWorkbook xssfWorkbook = writeOutAndReadBack(wb);
+            XSSFWorkbook xssfWorkbook = POITestCase.writeOutAndReadBack(wb);
             sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
             assertEquals(2, sss.getUniqueCount());
             assertTrue(wb.dispose());
@@ -62,25 +56,5 @@ public class TestSXSSFWorkbookWithTempFileSharedStringsTable {
             xssfWorkbook.close();
             wb.close();
         }
-    }
-
-    XSSFWorkbook writeOutAndReadBack(Workbook wb) {
-        // wb is usually an SXSSFWorkbook, but must also work on an XSSFWorkbook
-        // since workbooks must be able to be written out and read back
-        // several times in succession
-        if(!(wb instanceof SXSSFWorkbook || wb instanceof XSSFWorkbook)) {
-            throw new IllegalArgumentException("Expected an instance of SXSSFWorkbook");
-        }
-
-        XSSFWorkbook result;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(8192);
-            wb.write(baos);
-            InputStream is = new ByteArrayInputStream(baos.toByteArray());
-            result = new XSSFWorkbook(is);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return result;
     }
 }
