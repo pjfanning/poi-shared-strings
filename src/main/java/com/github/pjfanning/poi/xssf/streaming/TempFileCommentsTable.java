@@ -39,16 +39,21 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     private File tempFile;
     private MVStore mvStore;
 
+    private final boolean fullFormat;
     private final MVMap<String, XSSFComment> comments;
-
     private final MVMap<Integer, String> authors;
 
     public TempFileCommentsTable() {
-        this(false);
+        this(false, false);
     }
 
     public TempFileCommentsTable(boolean encryptTempFiles) {
+        this(encryptTempFiles, false);
+    }
+
+    public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat) {
         super();
+        this.fullFormat = fullFormat;
         try {
             tempFile = TempFile.createTempFile("poi-comments", ".tmp");
             MVStore.Builder mvStoreBuilder = new MVStore.Builder();
@@ -73,7 +78,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles) throws IOException {
-        this(encryptTempFiles);
+        this(pkg, encryptTempFiles, false);
+    }
+
+    public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles,
+                                 boolean fullFormat) throws IOException {
+        this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHEET_COMMENTS.getContentType());
         if (parts.size() > 0) {
             PackagePart sstPart = parts.get(0);
@@ -102,10 +112,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                             String ref = se.getAttributeByName(new QName("ref")).getValue();
                             String authorId = se.getAttributeByName(new QName("authorId")).getValue();
                             XSSFRichTextString str;
-                            try {
-                                str = parseFullComment(xmlEventReader);
-                            } catch (XmlException e) {
-                                throw new IOException("Failed to parse comment", e);
+                            if (fullFormat) {
+                                try {
+                                    str = parseFullComment(xmlEventReader);
+                                } catch (XmlException e) {
+                                    throw new IOException("Failed to parse comment", e);
+                                }
+                            } else {
+                                str = new XSSFRichTextString(parseSimplifiedComment(xmlEventReader));
                             }
                             XSSFComment xc = new SimpleXSSFComment();
                             xc.setAddress(new CellAddress(ref));
