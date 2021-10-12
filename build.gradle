@@ -6,9 +6,9 @@ plugins {
 }
 
 group = 'com.github.pjfanning'
-version = '3.0.0-SNAPSHOT'
+version = '2.2.0-SNAPSHOT'
 
-description = 'Memory efficient Shared String Table for POI'
+description = 'Memory efficient Shared String Table and Comments Table for POI'
 
 repositories {
     mavenCentral()

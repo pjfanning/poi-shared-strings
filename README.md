@@ -2,13 +2,23 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings)
 
 # poi-shared-strings
-Memory efficient Shared Strings Table implementation for [POI](https://poi.apache.org/) xlsx streaming. Supports read and write use cases when used with POI 5.x. poi-shared-strings 1.x supports POI 4.x.
+Memory efficient Shared Strings Table implementation for [POI](https://poi.apache.org/) xlsx streaming.
+
+Supports read and write use cases when used with POI 5.x. poi-shared-strings 1.x supports POI 4.x.
 
 https://bz.apache.org/bugzilla/show_bug.cgi?id=61832
 
 The `TempFileSharedStringsTable` uses a [H2 MVStore](http://www.h2database.com/html/mvstore.html) to store the Excel Shared String data. The MVStore data can be encrypted using a generated password.
 
-This class can be used instead of the POI [SharedStringsTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/model/SharedStringsTable.html) and [ReadOnlySharedStringsTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/eventusermodel/ReadOnlySharedStringsTable.html). It is only useful if you expect to need to support large numbers of shared string entries.
+This class can be used instead of the POI [SharedStringsTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/model/SharedStringsTable.html) and [ReadOnlySharedStringsTable](https://poi.apache.org/apidocs/org/apache/poi/xssf/eventusermodel/ReadOnlySharedStringsTable.html).
+It is only useful if you expect to need to support large numbers of shared string entries.
+
+## Comments Table
+
+v2.1.2 added support for `TempFileCommentsTable` which works in a similar way to `TempFileSharedStringsTable`.
+
+This class can be used instead of the POI [CommentsTable](https://poi.apache.org/apidocs/dev/org/apache/poi/xssf/model/CommentsTable.html).
+It is only useful if you expect to need to support large numbers of comments entries.
 
 ## Samples
 
