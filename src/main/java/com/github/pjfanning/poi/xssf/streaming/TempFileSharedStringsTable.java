@@ -8,9 +8,12 @@ import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.xmlbeans.XmlException;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTSst;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.SstDocument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,13 +21,11 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -55,6 +56,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     private static QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
     private File tempFile;
     private MVStore mvStore;
+    private final boolean fullFormat;
 
     /**
      *  Array of individual string items in the Shared String table.
@@ -67,11 +69,16 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     private final MVMap<String, Integer> stmap;
 
     public TempFileSharedStringsTable() {
-        this(false);
+        this(false, false);
     }
 
     public TempFileSharedStringsTable(boolean encryptTempFiles) {
+        this(encryptTempFiles, false);
+    }
+
+    public TempFileSharedStringsTable(boolean encryptTempFiles, boolean fullFormat) {
         super();
+        this.fullFormat = fullFormat;
         try {
             tempFile = TempFile.createTempFile("poi-shared-strings", ".tmp");
             MVStore.Builder mvStoreBuilder = new MVStore.Builder();
@@ -96,7 +103,12 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     }
 
     public TempFileSharedStringsTable(OPCPackage pkg, boolean encryptTempFiles) throws IOException {
-        this(encryptTempFiles);
+        this(pkg, encryptTempFiles, false);
+    }
+
+    public TempFileSharedStringsTable(OPCPackage pkg, boolean encryptTempFiles,
+                                      boolean fullFormat) throws IOException {
+        this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
         if (parts.size() > 0) {
             PackagePart sstPart = parts.get(0);
@@ -121,10 +133,12 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
                     if (xmlEvent.isStartElement()) {
-                        String localPart = xmlEvent.asStartElement().getName().getLocalPart();
+                        StartElement startElement = xmlEvent.asStartElement();
+                        QName startTag = startElement.getName();
+                        String localPart = startTag.getLocalPart();
                         if (localPart.equals("sst")) {
                             try {
-                                Attribute countAtt = xmlEvent.asStartElement().getAttributeByName(COUNT_QNAME);
+                                Attribute countAtt = startElement.getAttributeByName(COUNT_QNAME);
                                 if (countAtt != null) {
                                     count = Integer.parseInt(countAtt.getValue());
                                 }
@@ -132,7 +146,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                 log.warn("Failed to parse SharedStringsTable count");
                             }
                             try {
-                                Attribute uniqueCountAtt = xmlEvent.asStartElement().getAttributeByName(UNIQUE_COUNT_QNAME);
+                                Attribute uniqueCountAtt = startElement.getAttributeByName(UNIQUE_COUNT_QNAME);
                                 if (uniqueCountAtt != null) {
                                     uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
                                 }
@@ -140,8 +154,20 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                 log.warn("Failed to parse SharedStringsTable uniqueCount");
                             }
                         } else if (localPart.equals("si")) {
-                            String str = TextParser.parseCT_Rst(xmlEventReader);
-                            addEntry(new XSSFRichTextString(str).getCTRst(), true);
+                            if (fullFormat) {
+                                List<String> tags = Arrays.asList(new String[]{"sst", "si"});
+                                String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                                CTSst sst;
+                                try {
+                                    sst = SstDocument.Factory.parse(text).getSst();
+                                } catch (XmlException e) {
+                                    throw new IOException("Failed to parse shared string text", e);
+                                }
+                                addEntry(new XSSFRichTextString(sst.getSiArray(0)).getCTRst(), true);
+                            } else {
+                                String text = TextParser.parseCT_Rst(xmlEventReader);
+                                addEntry(new XSSFRichTextString(text).getCTRst(), true);
+                            }
                         }
                     }
                 }
@@ -158,8 +184,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             } finally {
                 xmlEventReader.close();
             }
-        } catch(XMLStreamException xse) {
-            throw new IOException("Failed to parse shared strings", xse);
+        } catch(XMLStreamException e) {
+            throw new IOException("Failed to parse shared strings", e);
         }
     }
 

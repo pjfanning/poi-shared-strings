@@ -11,14 +11,21 @@ import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
+import org.xml.sax.SAXException;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
+import javax.xml.transform.TransformerException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -37,16 +44,30 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     private File tempFile;
     private MVStore mvStore;
 
+    private final boolean fullFormat;
     private final MVMap<String, XSSFComment> comments;
-
     private final MVMap<Integer, String> authors;
 
+    private static final XmlOptions options = new XmlOptions();
+    static {
+        options.setSaveInner();
+        options.setSaveAggressiveNamespaces();
+        options.setUseDefaultNamespace(true);
+        options.setSaveUseOpenFrag(false);
+        options.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
+    }
+
     public TempFileCommentsTable() {
-        this(false);
+        this(false, false);
     }
 
     public TempFileCommentsTable(boolean encryptTempFiles) {
+        this(encryptTempFiles, false);
+    }
+
+    public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat) {
         super();
+        this.fullFormat = fullFormat;
         try {
             tempFile = TempFile.createTempFile("poi-comments", ".tmp");
             MVStore.Builder mvStoreBuilder = new MVStore.Builder();
@@ -71,7 +92,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles) throws IOException {
-        this(encryptTempFiles);
+        this(pkg, encryptTempFiles, false);
+    }
+
+    public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles,
+                                 boolean fullFormat) throws IOException {
+        this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHEET_COMMENTS.getContentType());
         if (parts.size() > 0) {
             PackagePart sstPart = parts.get(0);
@@ -99,7 +125,16 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                         } else if (se.getName().getLocalPart().equals("comment")) {
                             String ref = se.getAttributeByName(new QName("ref")).getValue();
                             String authorId = se.getAttributeByName(new QName("authorId")).getValue();
-                            String str = parseComment(xmlEventReader);
+                            XSSFRichTextString str;
+                            if (fullFormat) {
+                                try {
+                                    str = parseFullComment(xmlEventReader);
+                                } catch (XmlException e) {
+                                    throw new IOException("Failed to parse comment", e);
+                                }
+                            } else {
+                                str = new XSSFRichTextString(parseSimplifiedComment(xmlEventReader));
+                            }
                             XSSFComment xc = new SimpleXSSFComment();
                             xc.setAddress(new CellAddress(ref));
                             xc.setAuthor(authors.get(Integer.parseInt(authorId)));
@@ -111,8 +146,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             } finally {
                 xmlEventReader.close();
             }
-        } catch(XMLStreamException e) {
-            throw new IOException("Failed to parse comments", e);
+        } catch (XMLStreamException xse) {
+            throw new IOException("Failed to parse comments", xse);
         }
     }
 
@@ -194,7 +229,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 if (rts != null) {
                     writer.write("<text>");
                     if (rts.getCTRst() != null) {
-                        writer.write(rts.getCTRst().xmlText());
+                        writer.write(WriteUtils.stripXmlFragmentElement(rts.getCTRst().xmlText(options)));
                     } else {
                         writer.write("<t>");
                         writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
@@ -206,6 +241,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
             writer.write("</commentList>");
             writer.write("</comments>");
+        } catch (SAXException | ParserConfigurationException | TransformerException e) {
+            throw new IOException("Problem writing comments data", e);
         } finally {
             // do not close; let calling code close the output stream
             writer.flush();
@@ -213,9 +250,33 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     /**
+     * Parses a {@code <comment>} Comment. Uses POI/XMLBeans classes to parse full comment XML.
+     */
+    private XSSFRichTextString parseFullComment(XMLEventReader xmlEventReader) throws IOException, XmlException, XMLStreamException {
+        // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
+        XMLEvent xmlEvent;
+        XSSFRichTextString richTextString = null;
+        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+            StartElement startElement = xmlEvent.asStartElement();
+            QName startTag = startElement.getName();
+            switch(startTag.getLocalPart()) {
+                case "text":
+                    List<String> tags = Arrays.asList(new String[]{"comments", "commentList", "comment", "text"});
+                    String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                    CTCommentList comments = CommentsDocument.Factory.parse(text).getComments().getCommentList();
+                    richTextString = new XSSFRichTextString(comments.getCommentArray(0).getText());
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
+            }
+        }
+        return richTextString;
+    }
+
+    /**
      * Parses a {@code <comment>} Comment. Returns just the text and drops the formatting.
      */
-    private String parseComment(XMLEventReader xmlEventReader) throws XMLStreamException {
+    private String parseSimplifiedComment(XMLEventReader xmlEventReader) throws XMLStreamException {
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
         String text = null;

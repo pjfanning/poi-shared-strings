@@ -55,26 +55,22 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testReadStyledXML() throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
-            sst.readFrom(is);
-            Assert.assertEquals(1, sst.getCount());
-            Assert.assertEquals(1, sst.getUniqueCount());
-            Assert.assertEquals("shared styled string", sst.getItemAt(0).getString());
-        }
+        testReadStyledXML(false);
+    }
+
+    @Test
+    public void testReadStyledXMLFullFormat() throws Exception {
+        testReadStyledXML(true);
     }
 
     @Test
     public void testReadOOXMLStrict() throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
-            sst.readFrom(is);
-            Assert.assertEquals(15, sst.getUniqueCount());
-            Assert.assertEquals(19, sst.getCount());
-            Assert.assertEquals("Lorem", sst.getItemAt(0).getString());
-            Assert.assertEquals("The quick brown fox jumps over the lazy dog",
-                    sst.getItemAt(14).getString());
-        }
+        testReadOOXMLStrict(false);
+    }
+
+    @Test
+    public void testReadOOXMLStrictFullFormat() throws Exception {
+        testReadOOXMLStrict(true);
     }
 
     @Test(expected = NoSuchElementException.class)
@@ -104,6 +100,28 @@ public class TestTempFileSharedStringsTable {
             }
         } finally {
             file.delete();
+        }
+    }
+
+    private void testReadOOXMLStrict(boolean fullFormat) throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+            sst.readFrom(is);
+            Assert.assertEquals(15, sst.getUniqueCount());
+            Assert.assertEquals(19, sst.getCount());
+            Assert.assertEquals("Lorem", sst.getItemAt(0).getString());
+            Assert.assertEquals("The quick brown fox jumps over the lazy dog",
+                    sst.getItemAt(14).getString());
+        }
+    }
+
+    private void testReadStyledXML(boolean fullFormat) throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+            sst.readFrom(is);
+            Assert.assertEquals(1, sst.getCount());
+            Assert.assertEquals(1, sst.getUniqueCount());
+            Assert.assertEquals("shared styled string", sst.getItemAt(0).getString());
         }
     }
 }
