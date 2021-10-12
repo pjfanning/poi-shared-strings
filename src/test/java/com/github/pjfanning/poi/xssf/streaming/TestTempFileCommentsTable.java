@@ -7,9 +7,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TestTempFileCommentsTable {
 
@@ -89,6 +91,8 @@ public class TestTempFileCommentsTable {
             commentsTable.readFrom(is);
             assertEquals(3, commentsTable.getNumberOfComments());
             commentsTable.writeTo(bos);
+            String out = bos.toString(StandardCharsets.UTF_8);
+            assertFalse("XML must not contain xml-fragment element", out.contains("xml-fragment"));
             try (TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false, fullFormat)) {
                 commentsTable2.readFrom(bos.toInputStream());
                 assertEquals(3, commentsTable2.getNumberOfComments());
