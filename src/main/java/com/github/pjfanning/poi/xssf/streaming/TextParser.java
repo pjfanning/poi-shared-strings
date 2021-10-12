@@ -7,6 +7,8 @@ import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -18,8 +20,9 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 class TextParser {
 
+    private static final XMLEventFactory xef = XMLHelper.newXMLEventFactory();
+
     static String getXMLText(XMLEventReader xmlEventReader, QName tag, List<String> wrappingTags) throws IOException, XMLStreamException {
-        XMLEventFactory xef = XMLHelper.newXMLEventFactory();
         try (StringWriter sw = new StringWriter()) {
             XMLEventWriter xew = XMLHelper.newXMLOutputFactory().createXMLEventWriter(sw);
             try {
@@ -29,7 +32,7 @@ class TextParser {
                 }
                 XMLEvent event = xmlEventReader.nextEvent();
                 while (event != null && !(event.isEndElement() && event.asEndElement().getName().equals(tag))) {
-                    xew.add(event);
+                    xew.add(adjustNamespaceOnEvent(event));
                     event = xmlEventReader.nextEvent();
                 }
                 ListIterator<String> tagIter = wrappingTags.listIterator();
@@ -43,5 +46,24 @@ class TextParser {
             }
             return sw.toString();
         }
+    }
+
+    private static XMLEvent adjustNamespaceOnEvent(XMLEvent event) {
+        if (event.isStartElement()) {
+            StartElement se = event.asStartElement();
+            String nsUri = se.getName().getNamespaceURI();
+            if (nsUri != null && !nsUri.equals(NS_SPREADSHEETML)) {
+                return xef.createStartElement(new QName(NS_SPREADSHEETML, se.getName().getLocalPart()),
+                        se.getAttributes(), Collections.emptyIterator());
+            }
+        } else if (event.isEndElement()) {
+            EndElement ee = event.asEndElement();
+            String nsUri = ee.getName().getNamespaceURI();
+            if (nsUri != null && !nsUri.equals(NS_SPREADSHEETML)) {
+                return xef.createEndElement(new QName(NS_SPREADSHEETML, ee.getName().getLocalPart()),
+                        Collections.emptyIterator());
+            }
+        }
+        return event;
     }
 }
