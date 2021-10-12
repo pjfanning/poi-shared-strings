@@ -103,7 +103,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                             String authorId = se.getAttributeByName(new QName("authorId")).getValue();
                             XSSFRichTextString str;
                             try {
-                                str = parseComment(xmlEventReader, se.getName());
+                                str = parseFullComment(xmlEventReader);
                             } catch (XmlException e) {
                                 throw new IOException("Failed to parse comment", e);
                             }
@@ -219,7 +219,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         }
     }
 
-    private XSSFRichTextString parseComment(XMLEventReader xmlEventReader, QName commentTag) throws IOException, XmlException, XMLStreamException {
+    /**
+     * Parses a {@code <comment>} Comment. Uses POI/XMLBeans classes to parse full comment XML.
+     */
+    private XSSFRichTextString parseFullComment(XMLEventReader xmlEventReader) throws IOException, XmlException, XMLStreamException {
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
         XSSFRichTextString richTextString = null;
@@ -238,5 +241,24 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
         }
         return richTextString;
+    }
+
+    /**
+     * Parses a {@code <comment>} Comment. Returns just the text and drops the formatting.
+     */
+    private String parseSimplifiedComment(XMLEventReader xmlEventReader) throws XMLStreamException {
+        // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
+        XMLEvent xmlEvent;
+        String text = null;
+        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
+                case "text":
+                    text = TextParser.parseCT_Rst(xmlEventReader);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
+            }
+        }
+        return text;
     }
 }
