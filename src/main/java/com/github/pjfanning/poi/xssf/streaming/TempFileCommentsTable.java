@@ -45,12 +45,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     private final MVMap<String, XSSFComment> comments;
     private final MVMap<Integer, String> authors;
 
-    private static final XmlOptions textSaveOptions = new XmlOptions();
+    private static final XmlOptions textSaveOptions = new XmlOptions(Constants.saveOptions);
     static {
-        textSaveOptions.setCharacterEncoding("UTF-8");
-        textSaveOptions.setSaveAggressiveNamespaces();
-        textSaveOptions.setUseDefaultNamespace(true);
-        textSaveOptions.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
         textSaveOptions.setSaveSyntheticDocumentElement(
                 new QName(NS_SPREADSHEETML, "text"));
     }

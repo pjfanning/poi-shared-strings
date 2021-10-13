@@ -69,12 +69,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      */
     private final MVMap<String, Integer> stmap;
 
-    private static final XmlOptions siSaveOptions = new XmlOptions();
+    private static final XmlOptions siSaveOptions = new XmlOptions(Constants.saveOptions);
     static {
-        siSaveOptions.setCharacterEncoding("UTF-8");
-        siSaveOptions.setSaveAggressiveNamespaces();
-        siSaveOptions.setUseDefaultNamespace(true);
-        siSaveOptions.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
         siSaveOptions.setSaveSyntheticDocumentElement(
                 new QName(NS_SPREADSHEETML, "si"));
     }
