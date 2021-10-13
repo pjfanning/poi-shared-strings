@@ -9,6 +9,7 @@ import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
@@ -67,6 +68,16 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      *  Maps strings and their indexes in the <code>strings</code> arrays
      */
     private final MVMap<String, Integer> stmap;
+
+    private static final XmlOptions siSaveOptions = new XmlOptions();
+    static {
+        siSaveOptions.setCharacterEncoding("UTF-8");
+        siSaveOptions.setSaveAggressiveNamespaces();
+        siSaveOptions.setUseDefaultNamespace(true);
+        siSaveOptions.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
+        siSaveOptions.setSaveSyntheticDocumentElement(
+                new QName(NS_SPREADSHEETML, "si"));
+    }
 
     public TempFileSharedStringsTable() {
         this(false, false);
@@ -294,9 +305,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             writer.write(NS_SPREADSHEETML);
             writer.write("\">");
             for (CTRst rst : strings.values()) {
-                writer.write("<si>");
-                writer.write(xmlText(rst));
-                writer.write("</si>");
+                writer.write(rst.xmlText(siSaveOptions));
             }
             writer.write("</sst>");
         } finally {
