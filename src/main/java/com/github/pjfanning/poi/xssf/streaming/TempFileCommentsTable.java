@@ -17,15 +17,12 @@ import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
-import org.xml.sax.SAXException;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import javax.xml.transform.TransformerException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -48,13 +45,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     private final MVMap<String, XSSFComment> comments;
     private final MVMap<Integer, String> authors;
 
-    private static final XmlOptions options = new XmlOptions();
+    private static final XmlOptions textSaveOptions = new XmlOptions();
     static {
-        options.setSaveInner();
-        options.setSaveAggressiveNamespaces();
-        options.setUseDefaultNamespace(true);
-        options.setSaveUseOpenFrag(false);
-        options.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
+        textSaveOptions.setCharacterEncoding("UTF-8");
+        textSaveOptions.setSaveAggressiveNamespaces();
+        textSaveOptions.setUseDefaultNamespace(true);
+        textSaveOptions.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
+        textSaveOptions.setSaveSyntheticDocumentElement(
+                new QName(NS_SPREADSHEETML, "text"));
     }
 
     public TempFileCommentsTable() {
@@ -227,22 +225,18 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 writer.write("\">");
                 XSSFRichTextString rts = comment.getString();
                 if (rts != null) {
-                    writer.write("<text>");
                     if (rts.getCTRst() != null) {
-                        writer.write(WriteUtils.stripXmlFragmentElement(rts.getCTRst().xmlText(options)));
+                        writer.write(rts.getCTRst().xmlText(textSaveOptions));
                     } else {
-                        writer.write("<t>");
+                        writer.write("<text><t>");
                         writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
-                        writer.write("</t>");
+                        writer.write("</t></text>");
                     }
-                    writer.write("</text>");
                 }
                 writer.write("</comment>");
             }
             writer.write("</commentList>");
             writer.write("</comments>");
-        } catch (SAXException | ParserConfigurationException | TransformerException e) {
-            throw new IOException("Problem writing comments data", e);
         } finally {
             // do not close; let calling code close the output stream
             writer.flush();
