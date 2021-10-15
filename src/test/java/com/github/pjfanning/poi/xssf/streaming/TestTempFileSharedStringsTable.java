@@ -109,6 +109,8 @@ public class TestTempFileSharedStringsTable {
             assertEquals("Lorem", sst.getItemAt(0).getString());
             assertEquals("The quick brown fox jumps over the lazy dog",
                     sst.getItemAt(14).getString());
+            int expectedFormattingRuns = fullFormat ? 11: 0;
+            assertEquals(expectedFormattingRuns, sst.getItemAt(14).numFormattingRuns());
         }
     }
 

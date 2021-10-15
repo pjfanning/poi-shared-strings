@@ -3,6 +3,7 @@ package com.github.pjfanning.poi.xssf.streaming;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -79,6 +80,13 @@ public class TestTempFileCommentsTable {
             assertEquals("Sven Nissel", ct.getAuthor(0));
             assertEquals(1, ct.findAuthor("new-author"));
             assertEquals("new-author", ct.getAuthor(1));
+
+            XSSFRichTextString testComment = ct.findCellComment(addresses.get(0)).getString();
+            assertEquals("comment top row1 (index0)",
+                    testComment.getString()
+                            .replace("\n", "").replace("\r", ""));
+            int expectedRuns = fullFormat ? 2 : 0;
+            assertEquals(expectedRuns, testComment.numFormattingRuns());
         }
     }
 
