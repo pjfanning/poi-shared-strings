@@ -1,5 +1,11 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
@@ -32,4 +38,22 @@ public final class POITestCase {
         }
     }
 
+    public static XSSFWorkbook writeOutAndReadBack(Workbook wb) {
+        // wb is usually an SXSSFWorkbook, but must also work on an XSSFWorkbook
+        // since workbooks must be able to be written out and read back
+        // several times in succession
+        if(!(wb instanceof SXSSFWorkbook || wb instanceof XSSFWorkbook)) {
+            throw new IllegalArgumentException("Expected an instance of SXSSFWorkbook");
+        }
+
+        XSSFWorkbook result;
+        try {
+            UnsynchronizedByteArrayOutputStream baos = new UnsynchronizedByteArrayOutputStream(8192);
+            wb.write(baos);
+            result = new XSSFWorkbook(baos.toInputStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
 }

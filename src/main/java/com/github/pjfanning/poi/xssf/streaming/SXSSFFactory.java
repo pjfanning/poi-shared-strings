@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFRelation;
 public class SXSSFFactory extends XSSFFactory {
 
     private boolean encryptTempFiles = false;
+    private boolean enableTempFileComments = false;
 
     public SXSSFFactory() {}
 
@@ -26,6 +27,11 @@ public class SXSSFFactory extends XSSFFactory {
         return this;
     }
 
+    public SXSSFFactory enableTempFileComments(boolean enableTempFileComments) {
+        this.enableTempFileComments = enableTempFileComments;
+        return this;
+    }
+
     @Override
     public POIXMLDocumentPart newDocumentPart(POIXMLRelation descriptor) {
         if (XSSFRelation.SHARED_STRINGS.getRelation().equals(descriptor.getRelation())) {
@@ -33,6 +39,14 @@ public class SXSSFFactory extends XSSFFactory {
                 return new TempFileSharedStringsTable(encryptTempFiles);
             } catch (Error|RuntimeException e) {
                 throw new RuntimeException("Exception creating TempFileSharedStringsTable; com.h2database h2 jar is " +
+                        "required for this feature and is not included as a core dependency of poi-ooxml");
+            }
+        }
+        if (XSSFRelation.SHEET_COMMENTS.getRelation().equals(descriptor.getRelation()) && enableTempFileComments) {
+            try {
+                return new TempFileCommentsTable(encryptTempFiles);
+            } catch (Error|RuntimeException e) {
+                throw new RuntimeException("Exception creating TempFileCommentsTable; com.h2database h2 jar is " +
                         "required for this feature and is not included as a core dependency of poi-ooxml");
             }
         }

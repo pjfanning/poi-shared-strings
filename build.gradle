@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'signing'
     id 'maven-publish'
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
@@ -7,27 +8,29 @@ plugins {
 group = 'com.github.pjfanning'
 version = '3.0.0-SNAPSHOT'
 
-description = 'Memory efficient Shared String Table for POI'
+description = 'Memory efficient Shared String Table and Comments Table for POI'
 
 repositories {
     mavenCentral()
-    maven {
-      url "https://dist.apache.org/repos/dist/dev/poi/5.1.0-RC1/maven"
-    }
-    maven {
-      url "https://dist.apache.org/repos/dist/release/poi/xmlbeans/dev/maven"
-    }
+    mavenLocal()
 }
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'com.h2database:h2:1.4.200'
-    implementation 'org.apache.poi:poi-ooxml:5.1.0'
-    implementation 'org.apache.poi:poi:5.1.0'
+    implementation 'org.apache.poi:poi-ooxml:5.1.1-SNAPSHOT'
+    implementation 'org.apache.poi:poi:5.1.1-SNAPSHOT'
     implementation 'org.apache.xmlbeans:xmlbeans:5.0.2'
     implementation 'org.apache.commons:commons-text:1.9'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
+    testImplementation 'commons-io:commons-io:2.11.0'
     testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.32'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 nexusPublishing {
@@ -66,4 +69,11 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    def signingKey = findProperty("signingKey")
+    def signingPassword = findProperty("signingPassword")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
 }
