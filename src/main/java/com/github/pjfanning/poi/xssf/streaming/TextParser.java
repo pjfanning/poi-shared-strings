@@ -12,7 +12,6 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
@@ -86,9 +85,9 @@ class TextParser {
                     xew.add(adjustNamespaceOnEvent(event));
                     event = xmlEventReader.nextEvent();
                 }
-                List<String> reversedTags = new ArrayList<>(wrappingTags);
-                Collections.reverse(reversedTags);
-                for (String tagName : reversedTags) {
+                ListIterator<String> tagIter = wrappingTags.listIterator();
+                while (tagIter.hasPrevious()) {
+                    String tagName = tagIter.previous();
                     xew.add(xef.createEndElement(new QName(NS_SPREADSHEETML, tagName),
                             Collections.emptyIterator()));
                 }
