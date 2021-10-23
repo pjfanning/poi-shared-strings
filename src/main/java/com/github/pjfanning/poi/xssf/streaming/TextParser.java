@@ -85,7 +85,7 @@ class TextParser {
                     xew.add(adjustNamespaceOnEvent(event));
                     event = xmlEventReader.nextEvent();
                 }
-                ListIterator<String> tagIter = wrappingTags.listIterator();
+                ListIterator<String> tagIter = wrappingTags.listIterator(wrappingTags.size());
                 while (tagIter.hasPrevious()) {
                     String tagName = tagIter.previous();
                     xew.add(xef.createEndElement(new QName(NS_SPREADSHEETML, tagName),
