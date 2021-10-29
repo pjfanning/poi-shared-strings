@@ -17,6 +17,8 @@ import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;
@@ -38,6 +40,8 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileCommentsTable extends POIXMLDocumentPart implements Comments, AutoCloseable {
+    private static Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
+
     private File tempFile;
     private MVStore mvStore;
 
@@ -257,7 +261,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     richTextString = new XSSFRichTextString(comments.getCommentArray(0).getText());
                     break;
                 default:
-                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
+                    log.debug("ignoring data inside element {}", startElement.getName());
+                    break;
             }
         }
         return richTextString;
@@ -271,12 +276,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         XMLEvent xmlEvent;
         String text = null;
         while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
+            StartElement startElement = xmlEvent.asStartElement();
+            switch(startElement.getName().getLocalPart()) {
                 case "text":
                     text = TextParser.parseCT_Rst(xmlEventReader);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
+                    log.debug("ignoring data inside element {}", startElement.getName());
+                    break;
             }
         }
         return text;
