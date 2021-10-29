@@ -11,8 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 public class TestTempFileCommentsTable {
 
@@ -58,6 +57,33 @@ public class TestTempFileCommentsTable {
     @Test
     public void testWriteWithFullFormat() throws Exception {
         testWrite(false, true);
+    }
+
+    @Test
+    public void testReadStrictXML() throws Exception {
+        try (
+                InputStream is = TestTempFileCommentsTable.class.getClassLoader().getResourceAsStream("strict-comments1.xml");
+                TempFileCommentsTable ct = new TempFileCommentsTable(false, false)
+        ) {
+            ct.readFrom(is);
+            assertEquals(1, ct.getNumberOfComments());
+            List<CellAddress> addresses = IteratorUtils.toList(ct.getCellAddresses());
+            assertEquals(1, addresses.size());
+            assertEquals("B1", addresses.get(0).formatAsString());
+            for (CellAddress address : addresses) {
+                Assert.assertNotNull(ct.findCellComment(address));
+            }
+
+            assertEquals(1, ct.getNumberOfAuthors());
+            assertEquals("tc={12222C35-D781-4D4A-81D9-2C6FD97BD160}", ct.getAuthor(0));
+            assertEquals(1, ct.findAuthor("new-author"));
+            assertEquals("new-author", ct.getAuthor(1));
+
+            XSSFRichTextString testComment = ct.findCellComment(addresses.get(0)).getString();
+            assertTrue("comment text contains expected value?",
+                    testComment.getString().contains("Gaeilge"));
+            assertEquals(0, testComment.numFormattingRuns());
+        }
     }
 
     private void testReadXML(boolean encrypt, boolean fullFormat) throws Exception {

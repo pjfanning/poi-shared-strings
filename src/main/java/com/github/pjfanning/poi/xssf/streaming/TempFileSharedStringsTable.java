@@ -52,9 +52,9 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileSharedStringsTable extends SharedStringsTable {
-    private static Logger log = LoggerFactory.getLogger(TempFileSharedStringsTable.class);
-    private static QName COUNT_QNAME = new QName("count");
-    private static QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
+    private static final Logger log = LoggerFactory.getLogger(TempFileSharedStringsTable.class);
+    private static final QName COUNT_QNAME = new QName("count");
+    private static final QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
     private File tempFile;
     private MVStore mvStore;
     private final boolean fullFormat;
