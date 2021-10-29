@@ -1,8 +1,11 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.poi.util.XMLHelper;
 import org.apache.xmlbeans.XmlOptions;
 
-import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
 import java.security.SecureRandom;
 import java.util.Collections;
 
@@ -18,4 +21,8 @@ class Constants {
         saveOptions.setUseDefaultNamespace(true);
         saveOptions.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
     }
+
+    static final XMLInputFactory XML_INPUT_FACTORY = XMLHelper.newXMLInputFactory();
+    static final XMLOutputFactory XML_OUTPUT_FACTORY = XMLHelper.newXMLOutputFactory();
+    static final XMLEventFactory XML_EVENT_FACTORY = XMLHelper.newXMLEventFactory();
 }
