@@ -20,6 +20,13 @@ v2.0.2 added support for `TempFileCommentsTable` which works in a similar way to
 This class can be used instead of the POI [CommentsTable](https://poi.apache.org/apidocs/dev/org/apache/poi/xssf/model/CommentsTable.html).
 It is only useful if you expect to need to support large numbers of comments entries.
 
+
+## Full Format
+
+v2.1.0 added support for parsing the shared strings and comments and keeping the formatting the data. This is optional and not enabled by default.
+This support requires a little extra memory. The default is to just extract the text of the shared strings and comments.
+Full Format support does not work when the files are in Strict OOXML format ([POI Issue](https://bz.apache.org/bugzilla/show_bug.cgi?id=57699)).
+
 ## Samples
 
 There is an xlsx reading sample and also an xlsx writing sample at https://github.com/pjfanning/poi-shared-strings-sample.
