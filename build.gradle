@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.github.pjfanning'
-version = '2.1.2-SNAPSHOT'
+version = '2.2.0-SNAPSHOT'
 
 description = 'Memory efficient Shared String Table and Comments Table for POI'
 
@@ -17,8 +17,9 @@ repositories {
 dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.32'
     implementation 'com.h2database:h2:1.4.200'
-    api 'org.apache.poi:poi:5.0.0'
-    api 'org.apache.poi:poi-ooxml:5.0.0'
+    implementation 'org.apache.poi:poi-ooxml:5.1.0'
+    implementation 'org.apache.poi:poi:5.1.0'
+    implementation 'org.apache.xmlbeans:xmlbeans:5.0.2'
     implementation 'org.apache.commons:commons-text:1.9'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
