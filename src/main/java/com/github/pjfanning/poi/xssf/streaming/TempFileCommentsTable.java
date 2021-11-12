@@ -45,7 +45,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     private MVStore mvStore;
 
     private final boolean fullFormat;
-    private final MVMap<String, XSSFComment> comments;
+    private final MVMap<String, SerializableComment> comments;
     private final MVMap<Integer, String> authors;
 
     private static final XmlOptions textSaveOptions = new XmlOptions(Constants.saveOptions);
@@ -132,7 +132,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                             } else {
                                 str = new XSSFRichTextString(parseSimplifiedComment(xmlEventReader));
                             }
-                            XSSFComment xc = new SimpleXSSFComment();
+                            SerializableComment xc = new SerializableComment();
                             xc.setAddress(new CellAddress(ref));
                             xc.setAuthor(authors.get(Integer.parseInt(authorId)));
                             xc.setString(str);
@@ -177,7 +177,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
-        return comments.get(cellAddress.formatAsString());
+        SerializableComment comment = comments.get(cellAddress.formatAsString());
+        return comment == null ? null : new DelegatingXSSFComment(comment);
     }
 
     @Override
@@ -216,7 +217,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
             writer.write("</authors>");
             writer.write("<commentList>");
-            for (XSSFComment comment : comments.values()) {
+            for (SerializableComment comment : comments.values()) {
                 writer.write("<comment ref=\"");
                 writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
                 writer.write("\" authorId=\"");
