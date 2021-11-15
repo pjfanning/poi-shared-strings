@@ -35,7 +35,7 @@ public class SXSSFFactory extends XSSFFactory {
     /**
      * @param enableTempFileSharedStrings whether to enable temp file shared strings table (default is true)
      * @return this factory instance
-     * @since v2.2.1
+     * @since v2.2.2
      */
     public SXSSFFactory enableTempFileSharedStrings(boolean enableTempFileSharedStrings) {
         this.enableTempFileSharedStrings = enableTempFileSharedStrings;
