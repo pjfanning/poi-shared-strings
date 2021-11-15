@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFRelation;
 public class SXSSFFactory extends XSSFFactory {
 
     private boolean encryptTempFiles = false;
+    private boolean enableTempFileSharedStrings = true;
     private boolean enableTempFileComments = false;
 
     public SXSSFFactory() {}
@@ -22,11 +23,30 @@ public class SXSSFFactory extends XSSFFactory {
         this.encryptTempFiles = encryptTempFiles;
     }
 
+    /**
+     * @param encryptTempFiles whether to encrypt the temp files
+     * @return this factory instance
+     */
     public SXSSFFactory encryptTempFiles(boolean encryptTempFiles) {
         this.encryptTempFiles = encryptTempFiles;
         return this;
     }
 
+    /**
+     * @param enableTempFileSharedStrings whether to enable temp file shared strings table (default is true)
+     * @return this factory instance
+     * @since v2.2.1
+     */
+    public SXSSFFactory enableTempFileSharedStrings(boolean enableTempFileSharedStrings) {
+        this.enableTempFileSharedStrings = enableTempFileSharedStrings;
+        return this;
+    }
+
+    /**
+     * @param enableTempFileComments whether to enable temp file comments table (default is false)
+     * @return this factory instance
+     * @since v2.0.2
+     */
     public SXSSFFactory enableTempFileComments(boolean enableTempFileComments) {
         this.enableTempFileComments = enableTempFileComments;
         return this;
@@ -34,7 +54,7 @@ public class SXSSFFactory extends XSSFFactory {
 
     @Override
     public POIXMLDocumentPart newDocumentPart(POIXMLRelation descriptor) {
-        if (XSSFRelation.SHARED_STRINGS.getRelation().equals(descriptor.getRelation())) {
+        if (XSSFRelation.SHARED_STRINGS.getRelation().equals(descriptor.getRelation()) && enableTempFileSharedStrings) {
             try {
                 return new TempFileSharedStringsTable(encryptTempFiles);
             } catch (Error|RuntimeException e) {
