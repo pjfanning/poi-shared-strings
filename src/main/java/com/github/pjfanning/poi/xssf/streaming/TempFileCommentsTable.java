@@ -1,11 +1,12 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.util.TempFile;
-import org.apache.poi.xssf.model.CommentsTable;
+import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
@@ -37,7 +38,7 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * properties, and phonetic properties (for East Asian languages).
  * </p>
  */
-public class TempFileCommentsTable extends CommentsTable implements AutoCloseable {
+public class TempFileCommentsTable extends POIXMLDocumentPart implements Comments, AutoCloseable {
     private static Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
 
     private File tempFile;
