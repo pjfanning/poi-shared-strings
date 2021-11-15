@@ -3,6 +3,7 @@ package com.github.pjfanning.poi.xssf.streaming;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.xssf.model.CommentsTable;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
@@ -144,6 +145,22 @@ public class TestTempFileCommentsTable {
                 assertEquals(1, commentsTable2.findAuthor("new-author"));
                 assertEquals("new-author", commentsTable2.getAuthor(1));
             }
+            CommentsTable commentsTable3 = new CommentsTable();
+            commentsTable3.readFrom(bos.toInputStream());
+            assertEquals(3, commentsTable3.getNumberOfComments());
+            List<CellAddress> addresses = IteratorUtils.toList(commentsTable3.getCellAddresses());
+            assertEquals(3, addresses.size());
+            assertEquals("A1", addresses.get(0).formatAsString());
+            assertEquals("A3", addresses.get(1).formatAsString());
+            assertEquals("A4", addresses.get(2).formatAsString());
+            for (CellAddress address : addresses) {
+                Assert.assertNotNull(commentsTable3.findCellComment(address));
+            }
+
+            assertEquals(1, commentsTable3.getNumberOfAuthors());
+            assertEquals("Sven Nissel", commentsTable3.getAuthor(0));
+            assertEquals(1, commentsTable3.findAuthor("new-author"));
+            assertEquals("new-author", commentsTable3.getAuthor(1));
         }
     }
 

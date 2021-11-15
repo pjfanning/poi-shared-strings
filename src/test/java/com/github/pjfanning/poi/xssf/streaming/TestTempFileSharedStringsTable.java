@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.RichTextString;
+import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
@@ -154,6 +155,14 @@ public class TestTempFileSharedStringsTable {
                 sst.writeTo(bos);
                 try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
                     sst2.readFrom(new ByteArrayInputStream(bos.toByteArray()));
+                    assertEquals(3, sst.getUniqueCount());
+                    assertEquals(7, sst.getCount());
+                    assertEquals("First string", sst.getItemAt(0).getString());
+                    assertEquals("Second string", sst.getItemAt(1).getString());
+                    assertEquals("Second string", sst.getItemAt(2).getString());
+                }
+                try (SharedStringsTable sst3 = new SharedStringsTable()) {
+                    sst3.readFrom(new ByteArrayInputStream(bos.toByteArray()));
                     assertEquals(3, sst.getUniqueCount());
                     assertEquals(7, sst.getCount());
                     assertEquals("First string", sst.getItemAt(0).getString());
