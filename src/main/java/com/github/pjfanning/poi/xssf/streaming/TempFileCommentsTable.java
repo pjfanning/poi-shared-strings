@@ -180,12 +180,16 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
         SerializableComment comment = comments.get(cellAddress.formatAsString());
-        return comment == null ? null : new DelegatingXSSFComment(comment);
+        return comment == null ? null : new ReadOnlyXSSFComment(comment);
     }
 
+    /**
+     * Not implemented. This class only supports read-only view of Comments.
+     * @throws IllegalStateException
+     */
     @Override
     public boolean removeComment(CellAddress cellRef) {
-        return false;
+        throw new IllegalStateException("Not Implemented - this class only supports read-only view of Comments");
     }
 
     @Override
