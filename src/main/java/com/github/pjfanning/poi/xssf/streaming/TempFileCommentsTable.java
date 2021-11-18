@@ -6,12 +6,14 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.util.TempFile;
+import org.apache.poi.util.Units;
 import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
 import org.slf4j.Logger;
@@ -182,17 +184,19 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     @Override
-    public XSSFComment findCellComment(XSSFSheet xssfSheet, CellAddress cellAddress) {
-        return null;
+    public XSSFComment findCellComment(XSSFSheet sheet, CellAddress cellAddress) {
+        XSSFComment comment = findCellComment(cellAddress);
+        if (comment == null) {
+            return null;
+        }
+        XSSFVMLDrawing vml = sheet.getVMLDrawing(false);
+        return new XSSFComment(this, comment.getCTComment(),
+                vml == null ? null : vml.findCommentShape(cellAddress.getRow(), cellAddress.getColumn()));
     }
 
-    /**
-     * Not implemented. This class only supports read-only view of Comments.
-     * @throws IllegalStateException
-     */
     @Override
     public boolean removeComment(CellAddress cellRef) {
-        throw new IllegalStateException("Not Implemented - this class only supports read-only view of Comments");
+        return comments.remove(cellRef.formatAsString()) != null;
     }
 
     @Override
@@ -242,8 +246,35 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     @Override
-    public XSSFComment createNewComment(XSSFSheet xssfSheet, XSSFClientAnchor xssfClientAnchor) {
-        return null;
+    public XSSFComment createNewComment(XSSFSheet sheet, XSSFClientAnchor clientAnchor) {
+        XSSFVMLDrawing vml = sheet.getVMLDrawing(true);
+        com.microsoft.schemas.vml.CTShape vmlShape = vml.newCommentShape();
+        if (clientAnchor.isSet()) {
+            // convert offsets from emus to pixels since we get a
+            // DrawingML-anchor
+            // but create a VML Drawing
+            int dx1Pixels = clientAnchor.getDx1() / Units.EMU_PER_PIXEL;
+            int dy1Pixels = clientAnchor.getDy1() / Units.EMU_PER_PIXEL;
+            int dx2Pixels = clientAnchor.getDx2() / Units.EMU_PER_PIXEL;
+            int dy2Pixels = clientAnchor.getDy2() / Units.EMU_PER_PIXEL;
+            String position = clientAnchor.getCol1() + ", " + dx1Pixels + ", " + clientAnchor.getRow1() + ", " + dy1Pixels + ", " +
+                    clientAnchor.getCol2() + ", " + dx2Pixels + ", " + clientAnchor.getRow2() + ", " + dy2Pixels;
+            vmlShape.getClientDataArray(0).setAnchorArray(0, position);
+        }
+        CellAddress ref = new CellAddress(clientAnchor.getRow1(), clientAnchor.getCol1());
+
+        if (findCellComment(ref) != null) {
+            throw new IllegalArgumentException("Multiple cell comments in one cell are not allowed, cell: " + ref);
+        }
+
+        String key = ref.formatAsString();
+        CTComment ctComment = CTComment.Factory.newInstance();
+        ctComment.setRef(key);
+        SerializableComment serializableComment = new SerializableComment();
+        serializableComment.setAddress(ref);
+        comments.append(key, serializableComment);
+
+        return new XSSFComment(this, ctComment, vmlShape);
     }
 
     @Override
