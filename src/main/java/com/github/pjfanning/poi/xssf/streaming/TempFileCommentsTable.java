@@ -306,7 +306,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             writer.write("<comments xmlns=\"");
             writer.write(NS_SPREADSHEETML);
             writer.write("\"><authors>");
-            for (String author : authors.values()) {
+            Iterator<Integer> authorIdIterator = authors.keyIterator(null);
+            while (authorIdIterator.hasNext()) {
+                Integer authorId = authorIdIterator.next();
+                String author = authorId == null ? null : authors.get(authorId);
                 writer.write("<author>");
                 writer.write(StringEscapeUtils.escapeXml11(author));
                 writer.write("</author>");
