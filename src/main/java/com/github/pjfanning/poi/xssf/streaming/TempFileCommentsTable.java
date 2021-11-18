@@ -194,8 +194,18 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public Iterator<CellAddress> getCellAddresses() {
-        Set<String> set = comments.keySet();
-        return set.stream().map((s) -> new CellAddress(s)).collect(Collectors.toSet()).iterator();
+        final Iterator<String> keyIterator = comments.keyIterator(null);
+        return new Iterator<CellAddress>() {
+            @Override
+            public boolean hasNext() {
+                return keyIterator.hasNext();
+            }
+
+            @Override
+            public CellAddress next() {
+                return new CellAddress(keyIterator.next());
+            }
+        };
     }
 
     @Override
