@@ -278,8 +278,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     @Override
-    public void referenceUpdated(CellAddress cellAddress, XSSFComment xssfComment) {
-
+    public void referenceUpdated(CellAddress oldReference, XSSFComment comment) {
+        comments.remove(oldReference);
+        SerializableComment serializableComment = new SerializableComment();
+        serializableComment.setAddress(comment.getAddress());
+        serializableComment.setString(comment.getString());
+        serializableComment.setAuthor(comment.getAuthor());
+        serializableComment.setVisible(comment.isVisible());
+        comments.put(comment.getAddress().formatAsString(), serializableComment);
     }
 
     @Override
