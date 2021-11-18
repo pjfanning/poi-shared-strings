@@ -316,23 +316,27 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
             writer.write("</authors>");
             writer.write("<commentList>");
-            for (SerializableComment comment : comments.values()) {
-                writer.write("<comment ref=\"");
-                writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
-                writer.write("\" authorId=\"");
-                writer.write(Integer.toString(findAuthor(comment.getAuthor())));
-                writer.write("\">");
-                XSSFRichTextString rts = comment.getString();
-                if (rts != null) {
-                    if (rts.getCTRst() != null) {
-                        writer.write(rts.getCTRst().xmlText(textSaveOptions));
-                    } else {
-                        writer.write("<text><t>");
-                        writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
-                        writer.write("</t></text>");
+            Iterator<String> commentsRefIterator = comments.keyIterator(null);
+            while (commentsRefIterator.hasNext()) {
+                SerializableComment comment = comments.get(commentsRefIterator.next());
+                if (comment != null) {
+                    writer.write("<comment ref=\"");
+                    writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
+                    writer.write("\" authorId=\"");
+                    writer.write(Integer.toString(findAuthor(comment.getAuthor())));
+                    writer.write("\">");
+                    XSSFRichTextString rts = comment.getString();
+                    if (rts != null) {
+                        if (rts.getCTRst() != null) {
+                            writer.write(rts.getCTRst().xmlText(textSaveOptions));
+                        } else {
+                            writer.write("<text><t>");
+                            writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
+                            writer.write("</t></text>");
+                        }
                     }
+                    writer.write("</comment>");
                 }
-                writer.write("</comment>");
             }
             writer.write("</commentList>");
             writer.write("</comments>");
