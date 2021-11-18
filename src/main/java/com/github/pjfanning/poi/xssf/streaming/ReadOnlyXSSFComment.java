@@ -8,6 +8,7 @@ import org.apache.poi.util.NotImplemented;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 
 public class ReadOnlyXSSFComment extends XSSFComment {
     private final SerializableComment delegate;
@@ -46,6 +47,14 @@ public class ReadOnlyXSSFComment extends XSSFComment {
     @Override
     public XSSFRichTextString getString() {
         return delegate.getString();
+    }
+
+    @Override
+    public CTComment getCTComment() {
+        CTRst rst = delegate.getString().getCTRst();
+        CTComment ctComment = CTComment.Factory.newInstance();
+        ctComment.setText(rst);
+        return ctComment;
     }
 
     /**
@@ -127,15 +136,6 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      */
     @Override
     public ClientAnchor getClientAnchor() {
-        throw new IllegalStateException("Not Implemented");
-    }
-
-    /**
-     * Not implemented.
-     * @throws IllegalStateException
-     */
-    @Override
-    protected CTComment getCTComment() {
         throw new IllegalStateException("Not Implemented");
     }
 

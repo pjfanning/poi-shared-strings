@@ -7,9 +7,7 @@ import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.util.TempFile;
 import org.apache.poi.xssf.model.Comments;
-import org.apache.poi.xssf.usermodel.XSSFComment;
-import org.apache.poi.xssf.usermodel.XSSFRelation;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.poi.xssf.usermodel.*;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
@@ -183,6 +181,11 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         return comment == null ? null : new ReadOnlyXSSFComment(comment);
     }
 
+    @Override
+    public XSSFComment findCellComment(XSSFSheet xssfSheet, CellAddress cellAddress) {
+        return null;
+    }
+
     /**
      * Not implemented. This class only supports read-only view of Comments.
      * @throws IllegalStateException
@@ -194,8 +197,58 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public Iterator<CellAddress> getCellAddresses() {
-        Set<String> set = comments.keySet();
-        return set.stream().map((s) -> new CellAddress(s)).collect(Collectors.toSet()).iterator();
+        final Iterator<String> keyIterator = comments.keyIterator(null);
+        return new Iterator<CellAddress>() {
+            @Override
+            public boolean hasNext() {
+                return keyIterator.hasNext();
+            }
+
+            @Override
+            public CellAddress next() {
+                return new CellAddress(keyIterator.next());
+            }
+        };
+    }
+
+    @Override
+    public Iterator<XSSFComment> commentIterator() {
+        final Iterator<String> keyIterator = comments.keyIterator(null);
+        return new Iterator<XSSFComment>() {
+            XSSFComment nextComment;
+
+            @Override
+            public boolean hasNext() {
+                return nextComment != null;
+            }
+
+            @Override
+            public XSSFComment next() {
+                if (nextComment != null) {
+                    XSSFComment toReturn = null;
+                    nextComment = null;
+                    return toReturn;
+                }
+                while (keyIterator.hasNext()) {
+                    String key = keyIterator.next();
+                    SerializableComment comment = comments.get(key);
+                    if (comment != null) {
+                        return new ReadOnlyXSSFComment(comment);
+                    }
+                }
+                return null;
+            }
+        };
+    }
+
+    @Override
+    public XSSFComment createNewComment(XSSFSheet xssfSheet, XSSFClientAnchor xssfClientAnchor) {
+        return null;
+    }
+
+    @Override
+    public void referenceUpdated(CellAddress cellAddress, XSSFComment xssfComment) {
+
     }
 
     @Override
