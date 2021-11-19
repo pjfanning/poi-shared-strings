@@ -165,11 +165,11 @@ public class TestTempFileSharedStringsTable {
                 }
                 try (SharedStringsTable sst3 = new SharedStringsTable()) {
                     sst3.readFrom(bos.toInputStream());
-                    assertEquals(3, sst.getUniqueCount());
-                    assertEquals(7, sst.getCount());
-                    assertEquals("First string", sst.getItemAt(0).getString());
-                    assertEquals("Second string", sst.getItemAt(1).getString());
-                    assertEquals("Second string", sst.getItemAt(2).getString());
+                    assertEquals(3, sst3.getUniqueCount());
+                    assertEquals(7, sst3.getCount());
+                    assertEquals("First string", sst3.getItemAt(0).getString());
+                    assertEquals("Second string", sst3.getItemAt(1).getString());
+                    assertEquals("Second string", sst3.getItemAt(2).getString());
                 }
             }
         }
