@@ -1,12 +1,19 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.xssf.streaming.*;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 import java.io.FileOutputStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class TestSXSSFWorkbookWithTempCommentsTable {
     @Test
@@ -25,8 +32,17 @@ public class TestSXSSFWorkbookWithTempCommentsTable {
             Comment comment = drawing.createCellComment(anchor);
             comment.setString(wb.getCreationHelper().createRichTextString("comment1"));
             cell.setCellComment(comment);
-            try (FileOutputStream fos = new FileOutputStream("test.xlsx")) {
-                wb.write(fos);
+            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+                wb.write(bos);
+                try (XSSFWorkbook wb2 = new XSSFWorkbook(bos.toInputStream())) {
+                    XSSFSheet xssfSheet = wb2.getSheetAt(0);
+                    XSSFRow xssfRow = xssfSheet.getRow(0);
+                    XSSFCell xssfCell = xssfRow.getCell(0);
+                    assertEquals(cell.getStringCellValue(), xssfCell.getStringCellValue());
+                    Comment xssfComment = cell.getCellComment();
+                    assertNotNull("xssfComment found?", xssfComment);
+                    assertEquals(comment.getString().getString(), xssfComment.getString().getString());
+                }
             }
         } finally {
             wb.close();

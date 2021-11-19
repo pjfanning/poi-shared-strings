@@ -175,22 +175,17 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public int findAuthor(String author) {
+        String nullSafeAuthor = author == null ? "" : author;
         Iterator<Integer> authorIdIterator = authors.keyIterator(null);
         while (authorIdIterator.hasNext()) {
             Integer authorId = authorIdIterator.next();
             String existingAuthor = authorId == null ? null : authors.get(authorId);
-            if (existingAuthor == null) {
-                if (author == null) {
-                    return authorId;
-                }
-            } else {
-                if (existingAuthor.equals(author)) {
-                    return authorId;
-                }
+            if (nullSafeAuthor.equals(existingAuthor)) {
+                return authorId;
             }
         }
         int index = getNumberOfAuthors();
-        authors.put(index, author);
+        authors.put(index, nullSafeAuthor);
         return index;
     }
 
@@ -328,6 +323,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
      * @throws IOException if an error occurs while writing.
      */
     public void writeTo(OutputStream out) throws IOException {
+        int nullAuthorId = findAuthor(null);
         Writer writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
         try {
             writer.write("<comments xmlns=\"");
@@ -350,12 +346,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     writer.write("<comment ref=\"");
                     writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
                     String author = comment.getAuthor();
-                    if (author != null) {
-                        writer.write("\" authorId=\"");
-                        writer.write(Integer.toString(findAuthor(author)));
-                        writer.write('\"');
-                    }
-                    writer.write('>');
+                    int authorId = author == null ? nullAuthorId : findAuthor(author);
+                    writer.write("\" authorId=\"");
+                    writer.write(Integer.toString(authorId));
+                    writer.write("\">");
                     XSSFRichTextString rts = comment.getString();
                     if (rts != null) {
                         if (rts.getCTRst() != null) {
