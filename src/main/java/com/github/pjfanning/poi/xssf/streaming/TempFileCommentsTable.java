@@ -349,9 +349,13 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 if (comment != null) {
                     writer.write("<comment ref=\"");
                     writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
-                    writer.write("\" authorId=\"");
-                    writer.write(Integer.toString(findAuthor(comment.getAuthor())));
-                    writer.write("\">");
+                    String author = comment.getAuthor();
+                    if (author != null) {
+                        writer.write("\" authorId=\"");
+                        writer.write(Integer.toString(findAuthor(author)));
+                        writer.write('\"');
+                    }
+                    writer.write('>');
                     XSSFRichTextString rts = comment.getString();
                     if (rts != null) {
                         if (rts.getCTRst() != null) {
