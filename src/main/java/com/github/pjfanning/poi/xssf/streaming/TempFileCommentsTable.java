@@ -39,8 +39,6 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * The comments table contains all the necessary information for displaying the string: the text, formatting
  * properties, and phonetic properties (for East Asian languages).
  * </p>
- * This implementation does not extend <code>CommentsTable</code>, so cannot be used for
- * creating new comments - it can only be used for reading existing comments from saved files.
  */
 public class TempFileCommentsTable extends POIXMLDocumentPart implements Comments, AutoCloseable {
     private static Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
