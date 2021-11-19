@@ -27,7 +27,6 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -279,7 +278,17 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public void referenceUpdated(CellAddress oldReference, XSSFComment comment) {
-        comments.remove(oldReference);
+        removeComment(oldReference);
+        addToMap(comment);
+    }
+
+    @Override
+    public void commentUpdated(XSSFComment comment) {
+        removeComment(comment.getAddress());
+        addToMap(comment);
+    }
+
+    private void addToMap(XSSFComment comment) {
         SerializableComment serializableComment = new SerializableComment();
         serializableComment.setAddress(comment.getAddress());
         serializableComment.setString(comment.getString());
