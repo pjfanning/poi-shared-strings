@@ -299,8 +299,13 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             writer.write("\" xmlns=\"");
             writer.write(NS_SPREADSHEETML);
             writer.write("\">");
-            for (CTRst rst : strings.values()) {
-                writer.write(rst.xmlText(siSaveOptions));
+            Iterator<Integer> idIter = strings.keyIterator(null);
+            while (idIter.hasNext()) {
+                Integer stringId = idIter.next();
+                CTRst rst = strings.get(stringId);
+                if (rst != null) {
+                    writer.write(rst.xmlText(siSaveOptions));
+                }
             }
             writer.write("</sst>");
         } finally {
