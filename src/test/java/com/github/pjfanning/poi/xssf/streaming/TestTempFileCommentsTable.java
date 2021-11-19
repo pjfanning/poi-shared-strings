@@ -2,8 +2,15 @@ package com.github.pjfanning.poi.xssf.streaming;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.model.CommentsTable;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
@@ -11,6 +18,7 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -161,6 +169,31 @@ public class TestTempFileCommentsTable {
             assertEquals("Sven Nissel", commentsTable3.getAuthor(0));
             assertEquals(1, commentsTable3.findAuthor("new-author"));
             assertEquals("new-author", commentsTable3.getAuthor(1));
+        }
+    }
+
+    @Test
+    public void stressTest() throws Exception {
+        final int limit = 10000;
+        try (
+                SXSSFWorkbook workbook = new SXSSFWorkbook();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
+        ) {
+            CreationHelper factory = workbook.getCreationHelper();
+            SXSSFSheet sheet = workbook.createSheet();
+            for (int i = 0; i < limit; i++) {
+                SXSSFRow row = sheet.createRow(i);
+                SXSSFCell cell = row.createCell(0);
+                ClientAnchor anchor = factory.createClientAnchor();
+                anchor.setCol1(0);
+                anchor.setCol2(1);
+                anchor.setRow1(row.getRowNum());
+                anchor.setRow2(row.getRowNum());
+                XSSFComment comment = commentsTable.createNewComment(sheet, anchor);
+                commentsTable.getAuthor()
+                comment.setString(UUID.randomUUID().toString());
+                comment.setAuthor();
+            }
         }
     }
 
