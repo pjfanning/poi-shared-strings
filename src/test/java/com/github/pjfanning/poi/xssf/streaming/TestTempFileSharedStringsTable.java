@@ -3,9 +3,12 @@ package com.github.pjfanning.poi.xssf.streaming;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.RichTextString;
+import org.apache.poi.util.TempFile;
+import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
@@ -16,44 +19,22 @@ import static org.junit.Assert.assertFalse;
 public class TestTempFileSharedStringsTable {
     @Test
     public void testWriteOut() throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
-            sst.addSharedStringItem(new XSSFRichTextString("First string"));
-            sst.addSharedStringItem(new XSSFRichTextString("First string"));
-            sst.addSharedStringItem(new XSSFRichTextString("First string"));
-            sst.addSharedStringItem(new XSSFRichTextString("Second string"));
-            sst.addSharedStringItem(new XSSFRichTextString("Second string"));
-            sst.addSharedStringItem(new XSSFRichTextString("Second string"));
-            XSSFRichTextString rts = new XSSFRichTextString("Second string");
-            XSSFFont font = new XSSFFont();
-            font.setFontName("Arial");
-            font.setBold(true);
-            rts.applyFont(font);
-            sst.addSharedStringItem(rts);
-            assertEquals(3, sst.getUniqueCount());
-            assertEquals(7, sst.getCount());
-            try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-                sst.writeTo(bos);
-                try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
-                    sst2.readFrom(new ByteArrayInputStream(bos.toByteArray()));
-                    assertEquals(3, sst.getUniqueCount());
-                    assertEquals(7, sst.getCount());
-                    assertEquals("First string", sst.getItemAt(0).getString());
-                    assertEquals("Second string", sst.getItemAt(1).getString());
-                    assertEquals("Second string", sst.getItemAt(2).getString());
-                }
-            }
-        }
+        testWriteOut(false);
+    }
+
+    @Test
+    public void testWriteOutFullFormat() throws Exception {
+        testWriteOut(true);
     }
 
     @Test
     public void testReadXML() throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
-            sst.readFrom(is);
-            assertEquals(60, sst.getCount());
-            assertEquals(38, sst.getUniqueCount());
-            assertEquals("City", sst.getItemAt(0).getString());
-        }
+        testReadXML(false);
+    }
+
+    @Test
+    public void testReadXMLFullFormat() throws Exception {
+        testReadXML(true);
     }
 
     @Test
@@ -79,6 +60,13 @@ public class TestTempFileSharedStringsTable {
     @Test(expected = NoSuchElementException.class)
     public void testReadMissingEntry() throws Exception {
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+            RichTextString rts = sst.getItemAt(0);
+        }
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testReadMissingEntryFullFormat() throws Exception {
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
             RichTextString rts = sst.getItemAt(0);
         }
     }
@@ -124,6 +112,8 @@ public class TestTempFileSharedStringsTable {
             assertEquals("Lorem", sst.getItemAt(0).getString());
             assertEquals("The quick brown fox jumps over the lazy dog",
                     sst.getItemAt(14).getString());
+            int expectedFormattingRuns = fullFormat ? 11: 0;
+            assertEquals(expectedFormattingRuns, sst.getItemAt(14).numFormattingRuns());
         }
     }
 
@@ -134,6 +124,77 @@ public class TestTempFileSharedStringsTable {
             assertEquals(1, sst.getCount());
             assertEquals(1, sst.getUniqueCount());
             assertEquals("shared styled string", sst.getItemAt(0).getString());
+        }
+    }
+
+    private void testReadXML(boolean fullFormat) throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+            sst.readFrom(is);
+            assertEquals(60, sst.getCount());
+            assertEquals(38, sst.getUniqueCount());
+            assertEquals("City", sst.getItemAt(0).getString());
+        }
+    }
+
+    private void testWriteOut(boolean fullFormat) throws Exception {
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+            sst.addSharedStringItem(new XSSFRichTextString("First string"));
+            sst.addSharedStringItem(new XSSFRichTextString("First string"));
+            sst.addSharedStringItem(new XSSFRichTextString("First string"));
+            sst.addSharedStringItem(new XSSFRichTextString("Second string"));
+            sst.addSharedStringItem(new XSSFRichTextString("Second string"));
+            sst.addSharedStringItem(new XSSFRichTextString("Second string"));
+            XSSFRichTextString rts = new XSSFRichTextString("Second string");
+            XSSFFont font = new XSSFFont();
+            font.setFontName("Arial");
+            font.setBold(true);
+            rts.applyFont(font);
+            sst.addSharedStringItem(rts);
+            assertEquals(3, sst.getUniqueCount());
+            assertEquals(7, sst.getCount());
+            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+                sst.writeTo(bos);
+                try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+                    sst2.readFrom(bos.toInputStream());
+                    assertEquals(3, sst2.getUniqueCount());
+                    assertEquals(7, sst2.getCount());
+                    assertEquals("First string", sst2.getItemAt(0).getString());
+                    assertEquals("Second string", sst2.getItemAt(1).getString());
+                    assertEquals("Second string", sst2.getItemAt(2).getString());
+                }
+                try (SharedStringsTable sst3 = new SharedStringsTable()) {
+                    sst3.readFrom(bos.toInputStream());
+                    assertEquals(3, sst3.getUniqueCount());
+                    assertEquals(7, sst3.getCount());
+                    assertEquals("First string", sst3.getItemAt(0).getString());
+                    assertEquals("Second string", sst3.getItemAt(1).getString());
+                    assertEquals("Second string", sst3.getItemAt(2).getString());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void stressTest() throws Exception {
+        final int limit = 100;
+        File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+            for (int i = 0; i < limit; i++) {
+                sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
+            }
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                sst.writeTo(fos);
+            }
+            try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+                try (FileInputStream fis = new FileInputStream(tempFile)){
+                    sst2.readFrom(fis);
+                }
+                assertEquals(limit, sst2.getUniqueCount());
+                assertEquals(limit, sst2.getCount());
+            }
+        } finally {
+            tempFile.delete();
         }
     }
 }

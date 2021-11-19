@@ -1,123 +1,105 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
-import com.microsoft.schemas.vml.CTShape;
-import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.util.CellAddress;
-import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
-import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 
-class SimpleXSSFComment extends XSSFComment {
+import java.io.Serializable;
+
+class SerializableComment implements Serializable {
+
+    private static final long serialVersionUID = 7829136421241571165L;
 
     private String author;
-    private XSSFRichTextString richTextString;
-    private CellAddress address;
+    private CTRst ctRst; //CTRstImpl is Serializable
+    private String addressAsText; //Serializable version of cellAddress
+    private transient CellAddress cellAddress; //CellAddress is not Serializable
     private boolean visible = true;
 
-    public SimpleXSSFComment() {
-        super(null, null, null);
+    public SerializableComment() {
+
     }
 
-    @Override
     public void setAddress(CellAddress address) {
-        this.address = address;
+        this.cellAddress = address;
+        this.addressAsText = address.formatAsString();
     }
 
-    @Override
     public String getAuthor() {
         return author;
     }
 
-    @Override
     public void setAuthor(String author) {
         this.author = author;
     }
 
-    @Override
     public int getColumn() {
+        CellAddress address = getAddress();
         if (address == null) {
             throw new IllegalStateException("cell address not initialised");
         }
         return address.getColumn();
     }
 
-    @Override
     public int getRow() {
+        CellAddress address = getAddress();
         if (address == null) {
             throw new IllegalStateException("cell address not initialised");
         }
         return address.getRow();
     }
 
-    @Override
     public boolean isVisible() {
         return visible;
     }
 
-    @Override
     public void setVisible(boolean visible) {
         this.visible = visible;
     }
 
-    @Override
     public CellAddress getAddress() {
-        return address;
+        if (cellAddress == null && addressAsText != null) {
+            //cellAddress is transient so might need to be recreated from addressAsText
+            cellAddress = new CellAddress(addressAsText);
+        }
+        return cellAddress;
     }
 
-    @Override
     public void setAddress(int row, int col) {
         setAddress(new CellAddress(row, col));
     }
 
-    @Override
     public void setColumn(int col) {
+        CellAddress address = getAddress();
         if (address == null) {
             throw new IllegalStateException("cell address not initialised");
         }
         setAddress(address.getRow(), col);
     }
 
-    @Override
     public void setRow(int row) {
+        CellAddress address = getAddress();
         if (address == null) {
             throw new IllegalStateException("cell address not initialised");
         }
         setAddress(row, address.getColumn());
     }
 
-    @Override
     public XSSFRichTextString getString() {
-        return richTextString;
+        return new XSSFRichTextString(ctRst);
     }
 
-    @Override
     public void setString(RichTextString string) {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
-        this.richTextString = (XSSFRichTextString)string;
+        this.ctRst = ((XSSFRichTextString)string).getCTRst();
     }
 
-    @Override
     public void setString(String text) {
         XSSFRichTextString rts = new XSSFRichTextString();
         rts.setString(text);
-        this.richTextString = rts;
-    }
-
-    @Override
-    public ClientAnchor getClientAnchor() {
-        throw new RuntimeException("Not Implemented");
-    }
-
-    @Override
-    protected CTComment getCTComment() {
-        throw new RuntimeException("Not Implemented");
-    }
-
-    @Override
-    protected CTShape getCTShape() {
-        throw new RuntimeException("Not Implemented");
+        setString(rts);
     }
 }

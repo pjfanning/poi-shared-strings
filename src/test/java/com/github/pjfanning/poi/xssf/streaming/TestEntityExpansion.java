@@ -1,6 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import fi.iki.elonen.NanoHTTPD;
+import org.apache.poi.ooxml.POIXMLException;
 import org.apache.poi.ooxml.util.PackageHelper;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.Cell;
@@ -25,6 +26,7 @@ import java.io.*;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestEntityExpansion {
 
@@ -48,6 +50,9 @@ public class TestEntityExpansion {
                     ++index;
                 }
                 Assert.assertEquals(getExpected(), handler.getExtract());
+            } catch (POIXMLException poixmlException) {
+                assertTrue("exception refers to disallow-doctype-decl",
+                        poixmlException.getMessage().contains("http://apache.org/xml/features/disallow-doctype-decl"));
             } catch (RuntimeException re) {
                 throw re;
             } catch (Exception e) {
@@ -69,6 +74,8 @@ public class TestEntityExpansion {
                     }
                 }
                 assertEquals(1, wb.getSharedStringSource().getCount());
+            } catch (POIXMLException poixmlException) {
+                assertEquals("unable to parse shared strings table", poixmlException.getMessage());
             } catch (RuntimeException re) {
                 throw re;
             } catch (Exception e) {

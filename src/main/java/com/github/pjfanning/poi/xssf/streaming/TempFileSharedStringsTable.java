@@ -4,11 +4,11 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.util.TempFile;
-import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
@@ -51,9 +51,9 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileSharedStringsTable extends SharedStringsTable {
-    private static Logger log = LoggerFactory.getLogger(TempFileSharedStringsTable.class);
-    private static QName COUNT_QNAME = new QName("count");
-    private static QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
+    private static final Logger log = LoggerFactory.getLogger(TempFileSharedStringsTable.class);
+    private static final QName COUNT_QNAME = new QName("count");
+    private static final QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
     private File tempFile;
     private MVStore mvStore;
     private final boolean fullFormat;
@@ -67,6 +67,12 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      *  Maps strings and their indexes in the <code>strings</code> arrays
      */
     private final MVMap<String, Integer> stmap;
+
+    private static final XmlOptions siSaveOptions = new XmlOptions(Constants.saveOptions);
+    static {
+        siSaveOptions.setSaveSyntheticDocumentElement(
+                new QName(NS_SPREADSHEETML, "si"));
+    }
 
     public TempFileSharedStringsTable() {
         this(false, false);
@@ -127,7 +133,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         try {
             int uniqueCount = -1;
             int count = -1;
-            XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
+            XMLEventReader xmlEventReader = Constants.XML_INPUT_FACTORY.createXMLEventReader(is);
             try {
                 while(xmlEventReader.hasNext()) {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
@@ -293,10 +299,13 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             writer.write("\" xmlns=\"");
             writer.write(NS_SPREADSHEETML);
             writer.write("\">");
-            for (CTRst rst : strings.values()) {
-                writer.write("<si>");
-                writer.write(xmlText(rst));
-                writer.write("</si>");
+            Iterator<Integer> idIter = strings.keyIterator(null);
+            while (idIter.hasNext()) {
+                Integer stringId = idIter.next();
+                CTRst rst = strings.get(stringId);
+                if (rst != null) {
+                    writer.write(rst.xmlText(siSaveOptions));
+                }
             }
             writer.write("</sst>");
         } finally {

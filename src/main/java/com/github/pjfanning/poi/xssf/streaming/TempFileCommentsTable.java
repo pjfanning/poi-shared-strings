@@ -1,35 +1,35 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import com.microsoft.schemas.vml.CTShape;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.util.TempFile;
-import org.apache.poi.util.XMLHelper;
+import org.apache.poi.util.Units;
 import org.apache.poi.xssf.model.Comments;
-import org.apache.poi.xssf.usermodel.XSSFComment;
-import org.apache.poi.xssf.usermodel.XSSFRelation;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.poi.xssf.usermodel.*;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
-import org.xml.sax.SAXException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import javax.xml.transform.TransformerException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -41,20 +41,19 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * </p>
  */
 public class TempFileCommentsTable extends POIXMLDocumentPart implements Comments, AutoCloseable {
+    private static Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
+
     private File tempFile;
     private MVStore mvStore;
 
     private final boolean fullFormat;
-    private final MVMap<String, XSSFComment> comments;
+    private final MVMap<String, SerializableComment> comments;
     private final MVMap<Integer, String> authors;
 
-    private static final XmlOptions options = new XmlOptions();
+    private static final XmlOptions textSaveOptions = new XmlOptions(Constants.saveOptions);
     static {
-        options.setSaveInner();
-        options.setSaveAggressiveNamespaces();
-        options.setUseDefaultNamespace(true);
-        options.setSaveUseOpenFrag(false);
-        options.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
+        textSaveOptions.setSaveSyntheticDocumentElement(
+                new QName(NS_SPREADSHEETML, "text"));
     }
 
     public TempFileCommentsTable() {
@@ -113,7 +112,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
      */
     public void readFrom(InputStream is) throws IOException {
         try {
-            XMLEventReader xmlEventReader = XMLHelper.newXMLInputFactory().createXMLEventReader(is);
+            XMLEventReader xmlEventReader = Constants.XML_INPUT_FACTORY.createXMLEventReader(is);
             try {
                 while(xmlEventReader.hasNext()) {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
@@ -135,7 +134,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                             } else {
                                 str = new XSSFRichTextString(parseSimplifiedComment(xmlEventReader));
                             }
-                            XSSFComment xc = new SimpleXSSFComment();
+                            SerializableComment xc = new SerializableComment();
                             xc.setAddress(new CellAddress(ref));
                             xc.setAuthor(authors.get(Integer.parseInt(authorId)));
                             xc.setString(str);
@@ -168,9 +167,18 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public int findAuthor(String author) {
-        for (Map.Entry<Integer, String> entry : authors.entrySet()) {
-            if (entry.getValue().equals(author)) {
-                return entry.getKey();
+        Iterator<Integer> authorIdIterator = authors.keyIterator(null);
+        while (authorIdIterator.hasNext()) {
+            Integer authorId = authorIdIterator.next();
+            String existingAuthor = authorId == null ? null : authors.get(authorId);
+            if (existingAuthor == null) {
+                if (author == null) {
+                    return authorId;
+                }
+            } else {
+                if (existingAuthor.equals(author)) {
+                    return authorId;
+                }
             }
         }
         int index = getNumberOfAuthors();
@@ -180,18 +188,123 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
-        return comments.get(cellAddress.formatAsString());
+        SerializableComment comment = comments.get(cellAddress.formatAsString());
+        return comment == null ? null : new ReadOnlyXSSFComment(comment);
+    }
+
+    @Override
+    public XSSFComment findCellComment(Sheet sheet, CellAddress cellAddress) {
+        XSSFComment comment = findCellComment(cellAddress);
+        if (comment == null) {
+            return null;
+        }
+        XSSFVMLDrawing vml = sheet instanceof XSSFSheet ? ((XSSFSheet)sheet).getVMLDrawing(false) : null;
+        return new XSSFComment(this, comment.getCTComment(),
+                vml == null ? null : vml.findCommentShape(cellAddress.getRow(), cellAddress.getColumn()));
     }
 
     @Override
     public boolean removeComment(CellAddress cellRef) {
-        return false;
+        return comments.remove(cellRef.formatAsString()) != null;
     }
 
     @Override
     public Iterator<CellAddress> getCellAddresses() {
-        Set<String> set = comments.keySet();
-        return set.stream().map((s) -> new CellAddress(s)).collect(Collectors.toSet()).iterator();
+        final Iterator<String> keyIterator = comments.keyIterator(null);
+        return new Iterator<CellAddress>() {
+            @Override
+            public boolean hasNext() {
+                return keyIterator.hasNext();
+            }
+
+            @Override
+            public CellAddress next() {
+                return new CellAddress(keyIterator.next());
+            }
+        };
+    }
+
+    @Override
+    public Iterator<XSSFComment> commentIterator() {
+        final Iterator<String> keyIterator = comments.keyIterator(null);
+        return new Iterator<XSSFComment>() {
+            XSSFComment nextComment;
+
+            @Override
+            public boolean hasNext() {
+                return nextComment != null;
+            }
+
+            @Override
+            public XSSFComment next() {
+                if (nextComment != null) {
+                    XSSFComment toReturn = null;
+                    nextComment = null;
+                    return toReturn;
+                }
+                while (keyIterator.hasNext()) {
+                    String key = keyIterator.next();
+                    SerializableComment comment = comments.get(key);
+                    if (comment != null) {
+                        return new ReadOnlyXSSFComment(comment);
+                    }
+                }
+                return null;
+            }
+        };
+    }
+
+    @Override
+    public XSSFComment createNewComment(Sheet sheet, ClientAnchor clientAnchor) {
+        XSSFVMLDrawing vml = sheet instanceof XSSFSheet ? ((XSSFSheet)sheet).getVMLDrawing(true) : null;
+        CTShape vmlShape = vml == null ? null : vml.newCommentShape();
+        if (vmlShape != null && clientAnchor instanceof XSSFClientAnchor && ((XSSFClientAnchor)clientAnchor).isSet()) {
+            // convert offsets from emus to pixels since we get a
+            // DrawingML-anchor
+            // but create a VML Drawing
+            int dx1Pixels = clientAnchor.getDx1() / Units.EMU_PER_PIXEL;
+            int dy1Pixels = clientAnchor.getDy1() / Units.EMU_PER_PIXEL;
+            int dx2Pixels = clientAnchor.getDx2() / Units.EMU_PER_PIXEL;
+            int dy2Pixels = clientAnchor.getDy2() / Units.EMU_PER_PIXEL;
+            String position = clientAnchor.getCol1() + ", " + dx1Pixels + ", " + clientAnchor.getRow1() + ", " + dy1Pixels + ", " +
+                    clientAnchor.getCol2() + ", " + dx2Pixels + ", " + clientAnchor.getRow2() + ", " + dy2Pixels;
+            vmlShape.getClientDataArray(0).setAnchorArray(0, position);
+        }
+        CellAddress ref = new CellAddress(clientAnchor.getRow1(), clientAnchor.getCol1());
+
+        if (findCellComment(ref) != null) {
+            throw new IllegalArgumentException("Multiple cell comments in one cell are not allowed, cell: " + ref);
+        }
+
+        String key = ref.formatAsString();
+        CTComment ctComment = CTComment.Factory.newInstance();
+        ctComment.setRef(key);
+        SerializableComment serializableComment = new SerializableComment();
+        serializableComment.setAddress(ref);
+        comments.append(key, serializableComment);
+
+        return new XSSFComment(this, ctComment, vmlShape);
+    }
+
+    @Override
+    public void referenceUpdated(CellAddress oldReference, XSSFComment comment) {
+        removeComment(oldReference);
+        addToMap(comment);
+    }
+
+    @Override
+    public void commentUpdated(XSSFComment comment) {
+        removeComment(comment.getAddress());
+        addToMap(comment);
+    }
+
+    private void addToMap(XSSFComment comment) {
+        SerializableComment serializableComment = new SerializableComment();
+        serializableComment.setAddress(comment.getAddress());
+        serializableComment.setString(comment.getString());
+        serializableComment.setAuthor(comment.getAuthor());
+        serializableComment.setVisible(comment.isVisible());
+        comments.put(comment.getAddress().formatAsString(), serializableComment);
     }
 
     @Override
@@ -212,37 +325,40 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             writer.write("<comments xmlns=\"");
             writer.write(NS_SPREADSHEETML);
             writer.write("\"><authors>");
-            for (String author : authors.values()) {
+            Iterator<Integer> authorIdIterator = authors.keyIterator(null);
+            while (authorIdIterator.hasNext()) {
+                Integer authorId = authorIdIterator.next();
+                String author = authorId == null ? null : authors.get(authorId);
                 writer.write("<author>");
                 writer.write(StringEscapeUtils.escapeXml11(author));
                 writer.write("</author>");
             }
             writer.write("</authors>");
             writer.write("<commentList>");
-            for (XSSFComment comment : comments.values()) {
-                writer.write("<comment ref=\"");
-                writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
-                writer.write("\" authorId=\"");
-                writer.write(Integer.toString(findAuthor(comment.getAuthor())));
-                writer.write("\">");
-                XSSFRichTextString rts = comment.getString();
-                if (rts != null) {
-                    writer.write("<text>");
-                    if (rts.getCTRst() != null) {
-                        writer.write(WriteUtils.stripXmlFragmentElement(rts.getCTRst().xmlText(options)));
-                    } else {
-                        writer.write("<t>");
-                        writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
-                        writer.write("</t>");
+            Iterator<String> commentsRefIterator = comments.keyIterator(null);
+            while (commentsRefIterator.hasNext()) {
+                SerializableComment comment = comments.get(commentsRefIterator.next());
+                if (comment != null) {
+                    writer.write("<comment ref=\"");
+                    writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
+                    writer.write("\" authorId=\"");
+                    writer.write(Integer.toString(findAuthor(comment.getAuthor())));
+                    writer.write("\">");
+                    XSSFRichTextString rts = comment.getString();
+                    if (rts != null) {
+                        if (rts.getCTRst() != null) {
+                            writer.write(rts.getCTRst().xmlText(textSaveOptions));
+                        } else {
+                            writer.write("<text><t>");
+                            writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
+                            writer.write("</t></text>");
+                        }
                     }
-                    writer.write("</text>");
+                    writer.write("</comment>");
                 }
-                writer.write("</comment>");
             }
             writer.write("</commentList>");
             writer.write("</comments>");
-        } catch (SAXException | ParserConfigurationException | TransformerException e) {
-            throw new IOException("Problem writing comments data", e);
         } finally {
             // do not close; let calling code close the output stream
             writer.flush();
@@ -263,11 +379,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 case "text":
                     List<String> tags = Arrays.asList(new String[]{"comments", "commentList", "comment", "text"});
                     String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
-                    CTCommentList comments = CommentsDocument.Factory.parse(text).getComments().getCommentList();
-                    richTextString = new XSSFRichTextString(comments.getCommentArray(0).getText());
+                    CTCommentList commentsList = CommentsDocument.Factory.parse(text).getComments().getCommentList();
+                    richTextString = new XSSFRichTextString(commentsList.getCommentArray(0).getText());
                     break;
                 default:
-                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
+                    log.debug("ignoring data inside element {}", startElement.getName());
+                    break;
             }
         }
         return richTextString;
@@ -281,12 +398,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         XMLEvent xmlEvent;
         String text = null;
         while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
-            switch(xmlEvent.asStartElement().getName().getLocalPart()) {
+            StartElement startElement = xmlEvent.asStartElement();
+            switch(startElement.getName().getLocalPart()) {
                 case "text":
                     text = TextParser.parseCT_Rst(xmlEventReader);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unexpected element name " + xmlEvent.asStartElement().getName().getLocalPart());
+                    log.debug("ignoring data inside element {}", startElement.getName());
+                    break;
             }
         }
         return text;
