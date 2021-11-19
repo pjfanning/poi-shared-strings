@@ -177,26 +177,24 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void stressTest() throws Exception {
-        final int limit = 10000;
+        final int limit = 100;
+        File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
             for (int i = 0; i < limit; i++) {
                 sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
             }
-            File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
-            try {
-                try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                    sst.writeTo(fos);
-                }
-                try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
-                    try (FileInputStream fis = new FileInputStream(tempFile)){
-                        sst2.readFrom(fis);
-                    }
-                    assertEquals(limit, sst2.getUniqueCount());
-                    assertEquals(limit, sst2.getCount());
-                }
-            } finally {
-                tempFile.delete();
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                sst.writeTo(fos);
             }
+            try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+                try (FileInputStream fis = new FileInputStream(tempFile)){
+                    sst2.readFrom(fis);
+                }
+                assertEquals(limit, sst2.getUniqueCount());
+                assertEquals(limit, sst2.getCount());
+            }
+        } finally {
+            tempFile.delete();
         }
     }
 }

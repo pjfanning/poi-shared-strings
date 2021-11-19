@@ -5,6 +5,7 @@ import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.util.TempFile;
 import org.apache.poi.xssf.model.CommentsTable;
 import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
@@ -15,6 +16,9 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -175,6 +179,7 @@ public class TestTempFileCommentsTable {
     @Test
     public void stressTest() throws Exception {
         final int limit = 10000;
+        File tempFile = TempFile.createTempFile("comments-stress", ".tmp");
         try (
                 SXSSFWorkbook workbook = new SXSSFWorkbook();
                 TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
@@ -190,10 +195,23 @@ public class TestTempFileCommentsTable {
                 anchor.setRow1(row.getRowNum());
                 anchor.setRow2(row.getRowNum());
                 XSSFComment comment = commentsTable.createNewComment(sheet, anchor);
-                commentsTable.getAuthor()
-                comment.setString(UUID.randomUUID().toString());
-                comment.setAuthor();
+                String uniqueText = UUID.randomUUID().toString();
+                comment.setString(uniqueText);
+                comment.setAuthor("author" + uniqueText);
             }
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                commentsTable.writeTo(fos);
+            }
+            try (
+                    FileInputStream fis = new FileInputStream(tempFile);
+                    TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false, true)
+            ) {
+                commentsTable2.readFrom(fis);
+                assertEquals(limit, commentsTable2.getNumberOfAuthors());
+                assertEquals(limit, commentsTable2.getNumberOfComments());
+            }
+        } finally {
+            tempFile.delete();
         }
     }
 
