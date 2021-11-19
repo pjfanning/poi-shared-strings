@@ -27,7 +27,6 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
@@ -167,9 +166,18 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public int findAuthor(String author) {
-        for (Map.Entry<Integer, String> entry : authors.entrySet()) {
-            if (entry.getValue().equals(author)) {
-                return entry.getKey();
+        Iterator<Integer> authorIdIterator = authors.keyIterator(null);
+        while (authorIdIterator.hasNext()) {
+            Integer authorId = authorIdIterator.next();
+            String existingAuthor = authorId == null ? null : authors.get(authorId);
+            if (existingAuthor == null) {
+                if (author == null) {
+                    return authorId;
+                }
+            } else {
+                if (existingAuthor.equals(author)) {
+                    return authorId;
+                }
             }
         }
         int index = getNumberOfAuthors();
@@ -280,8 +288,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 case "text":
                     List<String> tags = Arrays.asList(new String[]{"comments", "commentList", "comment", "text"});
                     String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
-                    CTCommentList comments = CommentsDocument.Factory.parse(text).getComments().getCommentList();
-                    richTextString = new XSSFRichTextString(comments.getCommentArray(0).getText());
+                    CTCommentList commentsList = CommentsDocument.Factory.parse(text).getComments().getCommentList();
+                    richTextString = new XSSFRichTextString(commentsList.getCommentArray(0).getText());
                     break;
                 default:
                     log.debug("ignoring data inside element {}", startElement.getName());
