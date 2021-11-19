@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.github.pjfanning'
-version = '2.2.4-SNAPSHOT'
+version = '2.3.0-SNAPSHOT'
 
 description = 'Memory efficient Shared String Table and Comments Table for POI'
 

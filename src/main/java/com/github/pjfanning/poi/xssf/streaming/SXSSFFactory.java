@@ -45,7 +45,7 @@ public class SXSSFFactory extends XSSFFactory {
     /**
      * @param enableTempFileComments whether to enable temp file comments table (default is false)
      * @return this factory instance
-     * @since v2.0.2
+     * @since v2.3.0
      */
     public SXSSFFactory enableTempFileComments(boolean enableTempFileComments) {
         this.enableTempFileComments = enableTempFileComments;
