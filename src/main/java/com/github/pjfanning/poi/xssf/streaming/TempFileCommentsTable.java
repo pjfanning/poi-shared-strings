@@ -104,6 +104,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         }
     }
 
+    @Override
+    protected void commit() throws IOException {
+        PackagePart part = getPackagePart();
+        OutputStream out = part.getOutputStream();
+        writeTo(out);
+        out.close();
+    }
+
     /**
      * Read this comments table from an XML file.
      * 
