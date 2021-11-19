@@ -178,7 +178,7 @@ public class TestTempFileCommentsTable {
 
     @Test
     public void stressTest() throws Exception {
-        final int limit = 10000;
+        final int limit = 100;
         File tempFile = TempFile.createTempFile("comments-stress", ".tmp");
         try (
                 SXSSFWorkbook workbook = new SXSSFWorkbook();
