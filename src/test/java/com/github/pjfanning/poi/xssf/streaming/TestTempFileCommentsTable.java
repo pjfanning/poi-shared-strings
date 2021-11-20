@@ -87,6 +87,10 @@ public class TestTempFileCommentsTable {
                 Assert.assertNotNull(ct.findCellComment(address));
             }
 
+            List<XSSFComment> savedComments = IteratorUtils.toList(ct.commentIterator(null));
+            assertEquals(1, savedComments.size());
+            assertEquals("B1", savedComments.get(0).getAddress().formatAsString());
+
             assertEquals(1, ct.getNumberOfAuthors());
             assertEquals("tc={12222C35-D781-4D4A-81D9-2C6FD97BD160}", ct.getAuthor(0));
             assertEquals(1, ct.findAuthor("new-author"));
