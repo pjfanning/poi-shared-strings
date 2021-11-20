@@ -86,7 +86,7 @@ public class TestTempFileCommentsTable {
             for (CellAddress address : addresses) {
                 Assert.assertNotNull(ct.findCellComment(address));
             }
-            
+
             assertEquals(1, ct.getNumberOfAuthors());
             assertEquals("tc={12222C35-D781-4D4A-81D9-2C6FD97BD160}", ct.getAuthor(0));
             assertEquals(1, ct.findAuthor("new-author"));
