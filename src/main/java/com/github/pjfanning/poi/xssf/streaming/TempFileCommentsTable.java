@@ -192,7 +192,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
         SerializableComment comment = comments.get(cellAddress.formatAsString());
-        return comment == null ? null : new ReadOnlyXSSFComment(comment);
+        return comment == null ? null : new DelegatingXSSFComment(this, comment);
     }
 
     @Override
@@ -229,6 +229,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public Iterator<XSSFComment> commentIterator() {
+        final Comments commentsTable = this;
         final Iterator<String> keyIterator = comments.keyIterator(null);
         return new Iterator<XSSFComment>() {
             XSSFComment nextComment;
@@ -249,7 +250,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     String key = keyIterator.next();
                     SerializableComment comment = comments.get(key);
                     if (comment != null) {
-                        return new ReadOnlyXSSFComment(comment);
+                        return new DelegatingXSSFComment(commentsTable, comment);
                     }
                 }
                 return null;
