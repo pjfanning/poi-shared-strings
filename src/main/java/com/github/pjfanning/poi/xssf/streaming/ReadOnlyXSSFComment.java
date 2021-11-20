@@ -23,7 +23,6 @@ public class ReadOnlyXSSFComment extends XSSFComment {
         return delegate.getAuthor();
     }
 
-
     @Override
     public int getColumn() {
         return delegate.getColumn();
@@ -62,6 +61,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setAddress(int row, int col) {
         throw new IllegalStateException("Not Implemented");
     }
@@ -71,6 +71,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setAddress(CellAddress address) {
         throw new IllegalStateException("Not Implemented");
     }
@@ -80,6 +81,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setRow(int row) {
         throw new IllegalStateException("update actions are not supported");
     }
@@ -89,6 +91,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setColumn(int col) {
         throw new IllegalStateException("Not Implemented");
     }
@@ -98,6 +101,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setString(RichTextString string) {
         throw new IllegalStateException("update actions are not supported");
     }
@@ -107,6 +111,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setString(String string) {
         throw new IllegalStateException("update actions are not supported");
     }
@@ -126,6 +131,7 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public void setVisible(boolean visible) {
         throw new IllegalStateException("Not Implemented");
     }
@@ -135,15 +141,17 @@ public class ReadOnlyXSSFComment extends XSSFComment {
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     public ClientAnchor getClientAnchor() {
         throw new IllegalStateException("Not Implemented");
     }
-
+    
     /**
      * Not implemented.
      * @throws IllegalStateException
      */
     @Override
+    @NotImplemented
     protected CTShape getCTShape() {
         throw new IllegalStateException("Not Implemented");
     }
