@@ -185,6 +185,9 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
         }
         int index = getNumberOfAuthors();
+        if (index == 0 && !nullSafeAuthor.equals("")) {
+            authors.put(index++, "");
+        }
         authors.put(index, nullSafeAuthor);
         return index;
     }
@@ -324,7 +327,6 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
      * @throws IOException if an error occurs while writing.
      */
     public void writeTo(OutputStream out) throws IOException {
-        ensureAllAuthorsAreMapped();
         Writer writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
         try {
             writer.write("<comments xmlns=\"");
@@ -416,14 +418,5 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
         }
         return text;
-    }
-
-    //makes sure all authors including the null author are mapped in authors table
-    private void ensureAllAuthorsAreMapped() {
-        Iterator<String> commentsRefIterator = comments.keyIterator(null);
-        while (commentsRefIterator.hasNext()) {
-            SerializableComment comment = comments.get(commentsRefIterator.next());
-            findAuthor(comment.getAuthor());
-        }
     }
 }

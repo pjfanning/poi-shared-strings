@@ -207,7 +207,9 @@ public class TestTempFileCommentsTable {
                     TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false, true)
             ) {
                 commentsTable2.readFrom(fis);
-                assertEquals(limit, commentsTable2.getNumberOfAuthors());
+                //also includes the empty author that is automatically added
+                assertEquals(limit + 1, commentsTable2.getNumberOfAuthors());
+                assertEquals(0, commentsTable2.findAuthor(""));
                 assertEquals(limit, commentsTable2.getNumberOfComments());
             }
         } finally {
