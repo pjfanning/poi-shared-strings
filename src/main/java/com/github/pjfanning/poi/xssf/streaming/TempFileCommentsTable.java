@@ -175,29 +175,24 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public int findAuthor(String author) {
+        String nullSafeAuthor = author == null ? "" : author;
         Iterator<Integer> authorIdIterator = authors.keyIterator(null);
         while (authorIdIterator.hasNext()) {
             Integer authorId = authorIdIterator.next();
             String existingAuthor = authorId == null ? null : authors.get(authorId);
-            if (existingAuthor == null) {
-                if (author == null) {
-                    return authorId;
-                }
-            } else {
-                if (existingAuthor.equals(author)) {
-                    return authorId;
-                }
+            if (nullSafeAuthor.equals(existingAuthor)) {
+                return authorId;
             }
         }
         int index = getNumberOfAuthors();
-        authors.put(index, author);
+        authors.put(index, nullSafeAuthor);
         return index;
     }
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
         SerializableComment comment = comments.get(cellAddress.formatAsString());
-        return comment == null ? null : new ReadOnlyXSSFComment(comment);
+        return comment == null ? null : new DelegatingXSSFComment(this, comment);
     }
 
     @Override
@@ -234,6 +229,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public Iterator<XSSFComment> commentIterator() {
+        final Comments commentsTable = this;
         final Iterator<String> keyIterator = comments.keyIterator(null);
         return new Iterator<XSSFComment>() {
             XSSFComment nextComment;
@@ -254,7 +250,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     String key = keyIterator.next();
                     SerializableComment comment = comments.get(key);
                     if (comment != null) {
-                        return new ReadOnlyXSSFComment(comment);
+                        return new DelegatingXSSFComment(commentsTable, comment);
                     }
                 }
                 return null;
@@ -328,6 +324,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
      * @throws IOException if an error occurs while writing.
      */
     public void writeTo(OutputStream out) throws IOException {
+        ensureAllAuthorsAreMapped();
         Writer writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
         try {
             writer.write("<comments xmlns=\"");
@@ -350,12 +347,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                     writer.write("<comment ref=\"");
                     writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
                     String author = comment.getAuthor();
-                    if (author != null) {
-                        writer.write("\" authorId=\"");
-                        writer.write(Integer.toString(findAuthor(author)));
-                        writer.write('\"');
-                    }
-                    writer.write('>');
+                    int authorId = findAuthor(author);
+                    writer.write("\" authorId=\"");
+                    writer.write(Integer.toString(authorId));
+                    writer.write("\">");
                     XSSFRichTextString rts = comment.getString();
                     if (rts != null) {
                         if (rts.getCTRst() != null) {
@@ -421,5 +416,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
         }
         return text;
+    }
+
+    //makes sure all authors including the null author are mapped in authors table
+    private void ensureAllAuthorsAreMapped() {
+        Iterator<String> commentsRefIterator = comments.keyIterator(null);
+        while (commentsRefIterator.hasNext()) {
+            SerializableComment comment = comments.get(commentsRefIterator.next());
+            findAuthor(comment.getAuthor());
+        }
     }
 }

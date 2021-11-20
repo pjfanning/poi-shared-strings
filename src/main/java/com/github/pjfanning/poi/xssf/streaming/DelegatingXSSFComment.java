@@ -5,16 +5,19 @@ import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.util.NotImplemented;
+import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 
-public class ReadOnlyXSSFComment extends XSSFComment {
+public class DelegatingXSSFComment extends XSSFComment {
     private final SerializableComment delegate;
+    private final Comments comments;
 
-    public ReadOnlyXSSFComment(SerializableComment delegate) {
-        super(null, null, null);
+    public DelegatingXSSFComment(Comments comments, SerializableComment delegate) {
+        super(comments, null, null);
+        this.comments = comments;
         this.delegate = delegate;
     }
 
@@ -56,84 +59,59 @@ public class ReadOnlyXSSFComment extends XSSFComment {
         return ctComment;
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setAddress(int row, int col) {
-        throw new IllegalStateException("Not Implemented");
+        delegate.setAddress(row, col);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setAddress(CellAddress address) {
-        throw new IllegalStateException("Not Implemented");
+        delegate.setAddress(address);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setRow(int row) {
-        throw new IllegalStateException("update actions are not supported");
+        delegate.setRow(row);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setColumn(int col) {
-        throw new IllegalStateException("Not Implemented");
+        delegate.setColumn(col);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setString(RichTextString string) {
-        throw new IllegalStateException("update actions are not supported");
+        delegate.setString(string);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setString(String string) {
-        throw new IllegalStateException("update actions are not supported");
+        delegate.setString(string);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented. This class only supports read-only methods.
-     * @throws IllegalStateException
-     */
     @Override
-    @NotImplemented
     public void setAuthor(String author) {
-        throw new IllegalStateException("update actions are not supported");
+        delegate.setAuthor(author);
+        comments.commentUpdated(this);
     }
 
-    /**
-     * Not implemented.
-     * @throws IllegalStateException
-     */
     @Override
     @NotImplemented
     public void setVisible(boolean visible) {
-        throw new IllegalStateException("Not Implemented");
+        delegate.setVisible(visible);
+        comments.commentUpdated(this);
     }
 
     /**
