@@ -232,7 +232,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     @Override
-    public Iterator<XSSFComment> commentIterator() {
+    public Iterator<XSSFComment> commentIterator(Sheet sheet) {
         final Comments commentsTable = this;
         final Iterator<String> keyIterator = comments.keyIterator(null);
         return new Iterator<XSSFComment>() {
@@ -240,24 +240,33 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
             @Override
             public boolean hasNext() {
+                if (nextComment == null) {
+                    setNext();
+                }
                 return nextComment != null;
             }
 
             @Override
             public XSSFComment next() {
-                if (nextComment != null) {
-                    XSSFComment toReturn = null;
-                    nextComment = null;
-                    return toReturn;
+                if (nextComment == null) {
+                    setNext();
                 }
+                if (nextComment != null) {
+                    XSSFComment commentToReturn = nextComment;
+                    nextComment = null;
+                    return commentToReturn;
+                }
+                throw new NoSuchElementException();
+            }
+
+            private void setNext() {
                 while (keyIterator.hasNext()) {
                     String key = keyIterator.next();
                     SerializableComment comment = comments.get(key);
                     if (comment != null) {
-                        return new DelegatingXSSFComment(commentsTable, comment);
+                        nextComment = new DelegatingXSSFComment(commentsTable, comment);
                     }
                 }
-                return null;
             }
         };
     }
