@@ -11,6 +11,7 @@ import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.util.TempFile;
 import org.apache.poi.util.Units;
 import org.apache.poi.xssf.model.Comments;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
@@ -204,7 +205,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
         if (comment == null) {
             return null;
         }
-        XSSFVMLDrawing vml = sheet instanceof XSSFSheet ? ((XSSFSheet)sheet).getVMLDrawing(false) : null;
+        XSSFVMLDrawing vml = getVMLDrawing(sheet, false);
         return new XSSFComment(this, comment.getCTComment(),
                 vml == null ? null : vml.findCommentShape(cellAddress.getRow(), cellAddress.getColumn()));
     }
@@ -263,7 +264,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public XSSFComment createNewComment(Sheet sheet, ClientAnchor clientAnchor) {
-        XSSFVMLDrawing vml = sheet instanceof XSSFSheet ? ((XSSFSheet)sheet).getVMLDrawing(true) : null;
+        XSSFVMLDrawing vml = getVMLDrawing(sheet, true);
         CTShape vmlShape = vml == null ? null : vml.newCommentShape();
         if (vmlShape != null && clientAnchor instanceof XSSFClientAnchor && ((XSSFClientAnchor)clientAnchor).isSet()) {
             // convert offsets from emus to pixels since we get a
@@ -418,5 +419,14 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
         }
         return text;
+    }
+
+    private XSSFVMLDrawing getVMLDrawing(Sheet sheet, boolean autocreate) {
+        if (sheet instanceof XSSFSheet) {
+            return ((XSSFSheet)sheet).getVMLDrawing(autocreate);
+        } else if (sheet instanceof SXSSFSheet) {
+            return ((SXSSFSheet)sheet).getVMLDrawing(autocreate);
+        }
+        return null;
     }
 }
