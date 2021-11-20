@@ -60,36 +60,42 @@ public class DelegatingXSSFComment extends XSSFComment {
     }
 
     @Override
+    @NotImplemented
     public void setAddress(int row, int col) {
         delegate.setAddress(row, col);
         comments.commentUpdated(this);
     }
 
     @Override
+    @NotImplemented
     public void setAddress(CellAddress address) {
         delegate.setAddress(address);
         comments.commentUpdated(this);
     }
 
     @Override
+    @NotImplemented
     public void setRow(int row) {
         delegate.setRow(row);
         comments.commentUpdated(this);
     }
 
     @Override
+    @NotImplemented
     public void setColumn(int col) {
         delegate.setColumn(col);
         comments.commentUpdated(this);
     }
 
     @Override
+    @NotImplemented
     public void setString(RichTextString string) {
         delegate.setString(string);
         comments.commentUpdated(this);
     }
 
     @Override
+    @NotImplemented
     public void setString(String string) {
         delegate.setString(string);
         comments.commentUpdated(this);
@@ -102,6 +108,7 @@ public class DelegatingXSSFComment extends XSSFComment {
     }
 
     @Override
+    @NotImplemented
     public void setVisible(boolean visible) {
         delegate.setVisible(visible);
         comments.commentUpdated(this);
@@ -116,7 +123,7 @@ public class DelegatingXSSFComment extends XSSFComment {
     public ClientAnchor getClientAnchor() {
         throw new IllegalStateException("Not Implemented");
     }
-
+    
     /**
      * Not implemented.
      * @throws IllegalStateException
