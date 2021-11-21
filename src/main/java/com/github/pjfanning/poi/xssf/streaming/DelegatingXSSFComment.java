@@ -60,42 +60,40 @@ public class DelegatingXSSFComment extends XSSFComment {
     }
 
     @Override
-    @NotImplemented
     public void setAddress(int row, int col) {
+        CellAddress oldAddress = delegate.getAddress();
         delegate.setAddress(row, col);
-        comments.commentUpdated(this);
+        comments.referenceUpdated(oldAddress, this);
     }
 
     @Override
-    @NotImplemented
     public void setAddress(CellAddress address) {
+        CellAddress oldAddress = delegate.getAddress();
         delegate.setAddress(address);
-        comments.commentUpdated(this);
+        comments.referenceUpdated(oldAddress, this);
     }
 
     @Override
-    @NotImplemented
     public void setRow(int row) {
+        CellAddress oldAddress = delegate.getAddress();
         delegate.setRow(row);
-        comments.commentUpdated(this);
+        comments.referenceUpdated(oldAddress, this);
     }
 
     @Override
-    @NotImplemented
     public void setColumn(int col) {
+        CellAddress oldAddress = delegate.getAddress();
         delegate.setColumn(col);
-        comments.commentUpdated(this);
+        comments.referenceUpdated(oldAddress, this);
     }
 
     @Override
-    @NotImplemented
     public void setString(RichTextString string) {
         delegate.setString(string);
         comments.commentUpdated(this);
     }
 
     @Override
-    @NotImplemented
     public void setString(String string) {
         delegate.setString(string);
         comments.commentUpdated(this);
@@ -108,7 +106,6 @@ public class DelegatingXSSFComment extends XSSFComment {
     }
 
     @Override
-    @NotImplemented
     public void setVisible(boolean visible) {
         delegate.setVisible(visible);
         comments.commentUpdated(this);
