@@ -92,10 +92,13 @@ public class TestTempFileCommentsTable {
             assertEquals(1, ct.findAuthor("new-author"));
             assertEquals("new-author", ct.getAuthor(1));
 
-            XSSFRichTextString testComment = ct.findCellComment(addresses.get(0)).getString();
+            XSSFComment testComment = ct.findCellComment(addresses.get(0));
+            XSSFRichTextString testCommentText = testComment.getString();
             assertTrue("comment text contains expected value?",
-                    testComment.getString().contains("Gaeilge"));
-            assertEquals(0, testComment.numFormattingRuns());
+                    testCommentText.getString().contains("Gaeilge"));
+            assertEquals(0, testCommentText.numFormattingRuns());
+            //not set because there is no sheet data and related VMLDrawing data
+            assertNull("client anchor not set?", testComment.getClientAnchor());
         }
     }
 

@@ -1,18 +1,13 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import com.microsoft.schemas.vml.CTShape;
-import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.util.CellAddress;
-import org.apache.poi.util.NotImplemented;
 import org.apache.poi.xssf.model.Comments;
-import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
-
-import static org.apache.poi.util.Units.EMU_PER_PIXEL;
 
 public class DelegatingXSSFComment extends XSSFComment {
     private final SerializableComment delegate;
@@ -20,7 +15,7 @@ public class DelegatingXSSFComment extends XSSFComment {
     private final CTShape ctShape;
 
     DelegatingXSSFComment(Comments comments, SerializableComment delegate, CTShape ctShape) {
-        super(comments, null, null);
+        super(comments, null, ctShape);
         this.comments = comments;
         this.delegate = delegate;
         this.ctShape = ctShape;
@@ -119,20 +114,6 @@ public class DelegatingXSSFComment extends XSSFComment {
     @Override
     protected CTShape getCTShape() {
         return ctShape;
-    }
-
-    @Override
-    public ClientAnchor getClientAnchor() {
-        if(ctShape == null) {
-            return null;
-        }
-        String position = ctShape.getClientDataArray(0).getAnchorArray(0);
-        int[] pos = new int[8];
-        int i = 0;
-        for (String s : position.split(",")) {
-            pos[i++] = Integer.parseInt(s.trim());
-        }
-        return new XSSFClientAnchor(pos[1]*EMU_PER_PIXEL, pos[3]*EMU_PER_PIXEL, pos[5]*EMU_PER_PIXEL, pos[7]*EMU_PER_PIXEL, pos[0], pos[2], pos[4], pos[6]);
     }
 
 }
