@@ -8,6 +8,7 @@ import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.ClientAnchor;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.util.Internal;
 import org.apache.poi.util.TempFile;
 import org.apache.poi.util.Units;
 import org.apache.poi.xssf.model.Comments;
@@ -46,6 +47,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     private File tempFile;
     private MVStore mvStore;
+    private Sheet sheet;
 
     private final boolean fullFormat;
     private final MVMap<String, SerializableComment> comments;
@@ -103,6 +105,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
+    }
+
+    @Override
+    @Internal
+    public void setSheet(Sheet sheet) {
+        this.sheet = sheet;
     }
 
     @Override
@@ -195,18 +203,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
-        SerializableComment comment = comments.get(cellAddress.formatAsString());
-        return comment == null ? null : new DelegatingXSSFComment(this, comment);
-    }
-
-    @Override
-    public XSSFComment findCellComment(Sheet sheet, CellAddress cellAddress) {
-        XSSFComment comment = findCellComment(cellAddress);
-        if (comment == null) {
+        SerializableComment serializableComment = comments.get(cellAddress.formatAsString());
+        if (serializableComment == null) {
             return null;
         }
         XSSFVMLDrawing vml = getVMLDrawing(sheet, false);
-        return new XSSFComment(this, comment.getCTComment(),
+        return new DelegatingXSSFComment(this, serializableComment,
                 vml == null ? null : vml.findCommentShape(cellAddress.getRow(), cellAddress.getColumn()));
     }
 
@@ -232,7 +234,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     @Override
-    public XSSFComment createNewComment(Sheet sheet, ClientAnchor clientAnchor) {
+    public XSSFComment createNewComment(ClientAnchor clientAnchor) {
         XSSFVMLDrawing vml = getVMLDrawing(sheet, true);
         CTShape vmlShape = vml == null ? null : vml.newCommentShape();
         if (vmlShape != null && clientAnchor instanceof XSSFClientAnchor && ((XSSFClientAnchor)clientAnchor).isSet()) {

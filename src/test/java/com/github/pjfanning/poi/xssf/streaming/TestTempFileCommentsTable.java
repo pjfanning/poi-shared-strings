@@ -107,6 +107,7 @@ public class TestTempFileCommentsTable {
         ) {
             CreationHelper factory = workbook.getCreationHelper();
             SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
             SXSSFRow row = sheet.createRow(0);
             SXSSFCell cell = row.createCell(0);
             ClientAnchor anchor = factory.createClientAnchor();
@@ -114,7 +115,7 @@ public class TestTempFileCommentsTable {
             anchor.setCol2(1);
             anchor.setRow1(row.getRowNum());
             anchor.setRow2(row.getRowNum());
-            XSSFComment comment = commentsTable.createNewComment(sheet, anchor);
+            XSSFComment comment = commentsTable.createNewComment(anchor);
             String uniqueText = UUID.randomUUID().toString();
             comment.setString(uniqueText);
             comment.setAuthor("author" + uniqueText);
@@ -138,6 +139,7 @@ public class TestTempFileCommentsTable {
         ) {
             CreationHelper factory = workbook.getCreationHelper();
             SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
             SXSSFRow row = sheet.createRow(0);
             SXSSFCell cell = row.createCell(0);
             ClientAnchor anchor = factory.createClientAnchor();
@@ -145,7 +147,7 @@ public class TestTempFileCommentsTable {
             anchor.setCol2(1);
             anchor.setRow1(row.getRowNum());
             anchor.setRow2(row.getRowNum());
-            XSSFComment comment = commentsTable.createNewComment(sheet, anchor);
+            XSSFComment comment = commentsTable.createNewComment(anchor);
             String uniqueText = UUID.randomUUID().toString();
             comment.setString(uniqueText);
             comment.setAuthor("author" + uniqueText);
@@ -172,6 +174,7 @@ public class TestTempFileCommentsTable {
         ) {
             CreationHelper factory = workbook.getCreationHelper();
             SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
             for (int i = 0; i < limit; i++) {
                 SXSSFRow row = sheet.createRow(i);
                 SXSSFCell cell = row.createCell(0);
@@ -180,7 +183,7 @@ public class TestTempFileCommentsTable {
                 anchor.setCol2(1);
                 anchor.setRow1(row.getRowNum());
                 anchor.setRow2(row.getRowNum());
-                XSSFComment comment = commentsTable.createNewComment(sheet, anchor);
+                XSSFComment comment = commentsTable.createNewComment(anchor);
                 String uniqueText = UUID.randomUUID().toString();
                 comment.setString(uniqueText);
                 comment.setAuthor("author" + uniqueText);

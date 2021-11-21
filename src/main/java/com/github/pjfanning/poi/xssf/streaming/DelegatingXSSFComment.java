@@ -14,11 +14,13 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 public class DelegatingXSSFComment extends XSSFComment {
     private final SerializableComment delegate;
     private final Comments comments;
+    private final CTShape ctShape;
 
-    public DelegatingXSSFComment(Comments comments, SerializableComment delegate) {
+    DelegatingXSSFComment(Comments comments, SerializableComment delegate, CTShape ctShape) {
         super(comments, null, null);
         this.comments = comments;
         this.delegate = delegate;
+        this.ctShape = ctShape;
     }
 
     @Override
@@ -111,6 +113,11 @@ public class DelegatingXSSFComment extends XSSFComment {
         comments.commentUpdated(this);
     }
 
+    @Override
+    protected CTShape getCTShape() {
+        return ctShape;
+    }
+
     /**
      * Not implemented.
      * @throws IllegalStateException
@@ -121,13 +128,4 @@ public class DelegatingXSSFComment extends XSSFComment {
         throw new IllegalStateException("Not Implemented");
     }
     
-    /**
-     * Not implemented.
-     * @throws IllegalStateException
-     */
-    @Override
-    @NotImplemented
-    protected CTShape getCTShape() {
-        throw new IllegalStateException("Not Implemented");
-    }
 }
