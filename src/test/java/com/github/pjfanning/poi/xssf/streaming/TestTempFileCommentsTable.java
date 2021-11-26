@@ -168,6 +168,40 @@ public class TestTempFileCommentsTable {
     }
 
     @Test
+    public void testModifyComment() throws Exception {
+        try (
+                SXSSFWorkbook workbook = new SXSSFWorkbook();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
+        ) {
+            CreationHelper factory = workbook.getCreationHelper();
+            SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
+            SXSSFRow row = sheet.createRow(0);
+            SXSSFCell cell = row.createCell(0);
+            ClientAnchor anchor = factory.createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setCol2(1);
+            anchor.setRow1(row.getRowNum());
+            anchor.setRow2(row.getRowNum());
+            XSSFComment comment = commentsTable.createNewComment(anchor);
+            comment.setString("initText");
+            comment.setAuthor("initAuthor");
+
+            XSSFComment comment1 = commentsTable.findCellComment(new CellAddress("A1"));
+            assertEquals(comment.getString().getString(), comment1.getString().getString());
+            assertEquals(comment.getAuthor(), comment1.getAuthor());
+
+            String uniqueText = UUID.randomUUID().toString();
+            comment.setString(uniqueText);
+            comment.setAuthor("author" + uniqueText);
+
+            XSSFComment comment2 = commentsTable.findCellComment(new CellAddress("A1"));
+            assertEquals(comment.getString().getString(), comment2.getString().getString());
+            assertEquals(comment.getAuthor(), comment2.getAuthor());
+        }
+    }
+
+    @Test
     public void stressTest() throws Exception {
         final int limit = 100;
         File tempFile = TempFile.createTempFile("comments-stress", ".tmp");
