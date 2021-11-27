@@ -49,6 +49,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     private MVStore mvStore;
     private Sheet sheet;
 
+    private boolean ignoreDrawing = false;
     private final boolean fullFormat;
     private final MVMap<String, SerializableComment> comments;
     private final MVMap<Integer, String> authors;
@@ -105,6 +106,22 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
+    }
+
+    /**
+     * @param ignoreDrawing set to true if you don't need the drawing/shape data on the comments
+     *                      (default is false) - ignoring the drawing/shape data can save memory
+     */
+    public void setIgnoreDrawing(boolean ignoreDrawing) {
+        this.ignoreDrawing = ignoreDrawing;
+    }
+
+    /**
+     * @return whether to ignore the drawing/shape data (default is false) -
+     *         ignoring the drawing/shape data can save memory
+     */
+    public boolean isIgnoreDrawing() {
+        return ignoreDrawing;
     }
 
     @Override
@@ -393,10 +410,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     private XSSFVMLDrawing getVMLDrawing(Sheet sheet, boolean autocreate) {
-        if (sheet instanceof XSSFSheet) {
-            return ((XSSFSheet)sheet).getVMLDrawing(autocreate);
-        } else if (sheet instanceof SXSSFSheet) {
-            return ((SXSSFSheet)sheet).getVMLDrawing(autocreate);
+        if (!ignoreDrawing) {
+            if (sheet instanceof XSSFSheet) {
+                return ((XSSFSheet)sheet).getVMLDrawing(autocreate);
+            } else if (sheet instanceof SXSSFSheet) {
+                return ((SXSSFSheet)sheet).getVMLDrawing(autocreate);
+            }
         }
         return null;
     }
