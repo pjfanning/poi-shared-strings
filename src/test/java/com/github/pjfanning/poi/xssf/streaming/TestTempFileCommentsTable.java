@@ -264,12 +264,14 @@ public class TestTempFileCommentsTable {
             assertEquals(1, ct.findAuthor("new-author"));
             assertEquals("new-author", ct.getAuthor(1));
 
-            XSSFRichTextString testComment = ct.findCellComment(addresses.get(0)).getString();
+            XSSFComment testComment = ct.findCellComment(addresses.get(0));
+            assertNull("ctShape not set?", ((DelegatingXSSFComment)testComment).getCTShape());
+            XSSFRichTextString testCommentText = testComment.getString();
             assertEquals("comment top row1 (index0)",
-                    testComment.getString()
+                    testCommentText.getString()
                             .replace("\n", "").replace("\r", ""));
             int expectedRuns = fullFormat ? 2 : 0;
-            assertEquals(expectedRuns, testComment.numFormattingRuns());
+            assertEquals(expectedRuns, testCommentText.numFormattingRuns());
         }
     }
 
