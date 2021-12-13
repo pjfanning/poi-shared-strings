@@ -13,6 +13,7 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 class Constants {
     static final SecureRandom RANDOM = new SecureRandom();
+    static final int DEFAULT_CAFFEINE_CACHE_SIZE = 100;
 
     static final XmlOptions saveOptions = new XmlOptions();
     static {

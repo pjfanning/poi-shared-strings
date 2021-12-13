@@ -1,5 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -28,6 +30,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.github.pjfanning.poi.xssf.streaming.Constants.DEFAULT_CAFFEINE_CACHE_SIZE;
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 /**
@@ -55,6 +58,9 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 new QName(NS_SPREADSHEETML, "text"));
     }
 
+    private final Cache<String, SerializableComment> commentsCache;
+    private final Cache<Integer, String> authorsCache;
+
     public TempFileCommentsTable() {
         this(false, false);
     }
@@ -64,6 +70,11 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     }
 
     public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat) {
+        this(encryptTempFiles, fullFormat, DEFAULT_CAFFEINE_CACHE_SIZE);
+    }
+
+    public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat,
+                                 int caffeineCacheSize) {
         super();
         this.fullFormat = fullFormat;
         try {
@@ -78,6 +89,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             mvStore = mvStoreBuilder.open();
             comments = mvStore.openMap("comments");
             authors = mvStore.openMap("authors");
+            commentsCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+            authorsCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
             if (tempFile != null) tempFile.delete();
@@ -95,7 +108,12 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles,
                                  boolean fullFormat) throws IOException {
-        this(encryptTempFiles, fullFormat);
+        this(pkg, encryptTempFiles, false, DEFAULT_CAFFEINE_CACHE_SIZE);
+    }
+
+    public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles,
+                                 boolean fullFormat, int caffeineCacheSize) throws IOException {
+        this(encryptTempFiles, fullFormat, caffeineCacheSize);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHEET_COMMENTS.getContentType());
         if (parts.size() > 0) {
             PackagePart sstPart = parts.get(0);
@@ -169,7 +187,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public String getAuthor(long authorId) {
-        return authors.get((int)authorId);
+        return authorsCache.get((int)authorId, i -> authors.get(i));
     }
 
     @Override
@@ -195,7 +213,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
-        SerializableComment comment = comments.get(cellAddress.formatAsString());
+        SerializableComment comment = commentsCache.get(cellAddress.formatAsString(),
+                address -> comments.get(address));
         return comment == null ? null : new ReadOnlyXSSFComment(comment);
     }
 

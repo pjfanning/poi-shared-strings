@@ -1,5 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
@@ -27,6 +29,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static com.github.pjfanning.poi.xssf.streaming.Constants.DEFAULT_CAFFEINE_CACHE_SIZE;
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 /**
@@ -74,6 +77,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                 new QName(NS_SPREADSHEETML, "si"));
     }
 
+    private final Cache<Integer, CTRst> rstCache;
+
     public TempFileSharedStringsTable() {
         this(false, false);
     }
@@ -83,6 +88,11 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     }
 
     public TempFileSharedStringsTable(boolean encryptTempFiles, boolean fullFormat) {
+        this(encryptTempFiles, fullFormat, DEFAULT_CAFFEINE_CACHE_SIZE);
+    }
+
+    public TempFileSharedStringsTable(boolean encryptTempFiles, boolean fullFormat,
+                                      int caffeineCacheSize) {
         super();
         this.fullFormat = fullFormat;
         try {
@@ -97,6 +107,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             mvStore = mvStoreBuilder.open();
             strings = mvStore.openMap("strings");
             stmap = mvStore.openMap("stmap");
+            rstCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
             if (tempFile != null) tempFile.delete();
@@ -196,9 +207,11 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     }
 
     private CTRst getEntryAt(int idx) {
-        CTRst rst = strings.get(idx);
-        if (rst == null) throw new NoSuchElementException();
-        return rst;
+        return rstCache.get(idx, i -> {
+            CTRst rst = strings.get(i);
+            if (rst == null) throw new NoSuchElementException();
+            return rst;
+        });
     }
 
     /**
