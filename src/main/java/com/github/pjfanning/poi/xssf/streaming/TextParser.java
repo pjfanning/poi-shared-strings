@@ -17,14 +17,14 @@ import static com.github.pjfanning.poi.xssf.streaming.Constants.XML_EVENT_FACTOR
 import static com.github.pjfanning.poi.xssf.streaming.Constants.XML_OUTPUT_FACTORY;
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
-class TextParser {
+public class TextParser {
 
     /**
      * Parses a {@code <si>} String Item. Returns just the text and drops the formatting. See <a
      * href="https://msdn.microsoft.com/en-us/library/documentformat.openxml.spreadsheet.sharedstringitem.aspx">xmlschema
      * type {@code CT_Rst}</a>.
      */
-    static String parseCT_Rst(XMLEventReader xmlEventReader) throws XMLStreamException {
+    public static String parseCT_Rst(XMLEventReader xmlEventReader) throws XMLStreamException {
         // Precondition: pointing to <si> or <text>;  Post condition: pointing to </si> or </text>
         StringBuilder buf = new StringBuilder();
         XMLEvent xmlEvent;
@@ -69,7 +69,7 @@ class TextParser {
         }
     }
 
-    static String getXMLText(XMLEventReader xmlEventReader, QName tag, List<String> wrappingTags) throws IOException, XMLStreamException {
+    public static String getXMLText(XMLEventReader xmlEventReader, QName tag, List<String> wrappingTags) throws IOException, XMLStreamException {
         try (StringWriter sw = new StringWriter()) {
             XMLEventWriter xew = XML_OUTPUT_FACTORY.createXMLEventWriter(sw);
             try {

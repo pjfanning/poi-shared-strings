@@ -1,17 +1,11 @@
-package com.github.pjfanning.poi.xssf.streaming;
+package com.github.pjfanning.poi.xssf.streaming.cache;
 
-import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.openxml4j.opc.PackagePart;
+import com.github.pjfanning.poi.xssf.streaming.TextParser;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.xssf.model.SharedStringsTable;
-import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
-import org.mapdb.Serializer;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTSst;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.SstDocument;
@@ -24,105 +18,43 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
-/**
- * Table of strings shared across all sheets in a workbook.
- * <p>
- * A workbook may contain thousands of cells containing string (non-numeric) data. Furthermore this data is very
- * likely to be repeated across many rows or columns. The goal of implementing a single string table that is shared
- * across the workbook is to improve performance in opening and saving the file by only reading and writing the
- * repetitive information once.
- * </p>
- * <p>
- * Consider for example a workbook summarizing information for cities within various countries. There may be a
- * column for the name of the country, a column for the name of each city in that country, and a column
- * containing the data for each city. In this case the country name is repetitive, being duplicated in many cells.
- * In many cases the repetition is extensive, and a tremendous savings is realized by making use of a shared string
- * table when saving the workbook. When displaying text in the spreadsheet, the cell table will just contain an
- * index into the string table as the value of a cell, instead of the full string.
- * </p>
- * <p>
- * The shared string table contains all the necessary information for displaying the string: the text, formatting
- * properties, and phonetic properties (for East Asian languages).
- * </p>
- */
-public class MapDBSharedStringsTable extends SharedStringsTable {
-    private static final Logger log = LoggerFactory.getLogger(MapDBSharedStringsTable.class);
+public class CachedSharedStringsTable extends SharedStringsTable {
+
+    private static final Logger log = LoggerFactory.getLogger(CachedSharedStringsTable.class);
     private static final QName COUNT_QNAME = new QName("count");
     private static final QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
-    private DB db;
-    private final boolean fullFormat;
-
-    /**
-     *  Array of individual string items in the Shared String table.
-     */
-    private final HTreeMap<Integer, CTRst> strings;
-
-    /**
-     *  Maps strings and their indexes in the <code>strings</code> arrays
-     */
-    private final HTreeMap<String, Integer> stmap;
-
     private static final XmlOptions siSaveOptions = new XmlOptions(Constants.saveOptions);
+
     static {
         siSaveOptions.setSaveSyntheticDocumentElement(
                 new QName(NS_SPREADSHEETML, "si"));
     }
 
-    public MapDBSharedStringsTable() {
-        this(false);
-    }
+    private final SSTCache sstCache;
+    private final boolean fullFormat;
 
-    public MapDBSharedStringsTable(boolean fullFormat) {
+    public CachedSharedStringsTable(SSTCache sstCache, boolean fullFormat) {
         super();
+        this.sstCache = sstCache;
         this.fullFormat = fullFormat;
-        try {
-            db = DBMaker
-                    .memoryDirectDB()
-                    //.tempFileDB()
-                    //.fileMmapEnableIfSupported()
-                    //.fileDeleteAfterClose()
-                    .make();
-            strings = db.hashMap("strings")
-                    .keySerializer(Serializer.INTEGER)
-                    .valueSerializer(Serializer.JAVA)
-                    .create();
-            stmap = db.hashMap("stmap")
-                    .keySerializer(Serializer.STRING)
-                    .valueSerializer(Serializer.INTEGER)
-                    .create();
-        } catch (Error | RuntimeException e) {
-            if (db != null) db.close();
-            throw e;
-        } catch (Exception e) {
-            if (db != null) db.close();
-            throw new RuntimeException(e);
-        }
-    }
-
-    public MapDBSharedStringsTable(OPCPackage pkg) throws IOException {
-        this(pkg, false);
-    }
-
-    public MapDBSharedStringsTable(OPCPackage pkg, boolean fullFormat) throws IOException {
-        this(fullFormat);
-        ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
-        if (parts.size() > 0) {
-            PackagePart sstPart = parts.get(0);
-            this.readFrom(sstPart.getInputStream());
-        }
     }
 
     /**
-     * Read this shared strings table from an XML file.
-     * 
-     * @param is The input stream containing the XML document.
-     * @throws IOException if an error occurs while reading.
+     * {@inheritDoc}
      */
     @Override
     public void readFrom(InputStream is) throws IOException {
@@ -131,7 +63,7 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
             int count = -1;
             XMLEventReader xmlEventReader = Constants.XML_INPUT_FACTORY.createXMLEventReader(is);
             try {
-                while(xmlEventReader.hasNext()) {
+                while (xmlEventReader.hasNext()) {
                     XMLEvent xmlEvent = xmlEventReader.nextEvent();
 
                     if (xmlEvent.isStartElement()) {
@@ -186,23 +118,13 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
             } finally {
                 xmlEventReader.close();
             }
-        } catch(XMLStreamException e) {
+        } catch (XMLStreamException e) {
             throw new IOException("Failed to parse shared strings", e);
         }
     }
 
-    private CTRst getEntryAt(int idx) {
-        CTRst rst = strings.get(idx);
-        if (rst == null) throw new NoSuchElementException();
-        return rst;
-    }
-
     /**
-     * Return a string item by index
-     *
-     * @param idx index of item to return.
-     * @return the item at the specified position in this Shared String table.
-     * @throws NoSuchElementException if no item exists for this index
+     * {@inheritDoc}
      */
     @Override
     public RichTextString getItemAt(int idx) {
@@ -210,10 +132,7 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
     }
 
     /**
-     * Return an integer representing the total count of strings in the workbook. This count does not
-     * include any numbers, it counts only the total of text strings in the workbook.
-     *
-     * @return the total count of strings in the workbook
+     * {@inheritDoc}
      */
     @Override
     public int getCount() {
@@ -221,57 +140,26 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
     }
 
     /**
-     * Returns an integer representing the total count of unique strings in the Shared String Table.
-     * A string is unique even if it is a copy of another string, but has different formatting applied
-     * at the character level.
-     *
-     * @return the total count of unique strings in the workbook
+     * {@inheritDoc}
      */
     @Override
     public int getUniqueCount() {
         return uniqueCount;
     }
 
-    private int addEntry(CTRst st, boolean keepDuplicates) {
-        if (st == null) {
-            throw new NullPointerException("Cannot add null entry to SharedStringsTable");
-        }
-        String s = xmlText(st);
-        count++;
-        if (!keepDuplicates && stmap.containsKey(s)) {
-            return stmap.get(s);
-        }
-
-        int idx = uniqueCount++;
-        stmap.put(s, idx);
-        strings.put(idx, st);
-        return idx;
-    }
-
     /**
-     * Add an entry to this Shared String table (a new value is appended to the end).
-     *
-     * <p>
-     * If the Shared String table already contains this string entry, its index is returned.
-     * Otherwise a new entry is added.
-     * </p>
-     *
-     * @param string the entry to add
-     * @return index the index of added entry
+     * {@inheritDoc}
      */
     @Override
     public int addSharedStringItem(RichTextString string) {
-        if(!(string instanceof XSSFRichTextString)){
+        if (!(string instanceof XSSFRichTextString)) {
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
         return addEntry(((XSSFRichTextString) string).getCTRst(), false);
     }
 
     /**
-     * TempFileSharedStringsTable only supports streaming access of shared strings.
-     * Use <code>getItemAt</code> instead
-     *
-     * @return list of shared string instances
+     * {@inheritDoc}
      */
     @Override
     public List<RichTextString> getSharedStringItems() {
@@ -279,10 +167,7 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
     }
 
     /**
-     * Write this table out as XML.
-     * 
-     * @param out The stream to write to.
-     * @throws IOException if an error occurs while writing.
+     * {@inheritDoc}
      */
     @Override
     public void writeTo(OutputStream out) throws IOException {
@@ -295,10 +180,9 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
             writer.write("\" xmlns=\"");
             writer.write(NS_SPREADSHEETML);
             writer.write("\">");
-            Iterator<Integer> idIter = strings.keySet().iterator();
-            while (idIter.hasNext()) {
-                Integer stringId = idIter.next();
-                CTRst rst = strings.get(stringId);
+            Iterator<Integer> idIterator = sstCache.keyIterator();
+            while (idIterator.hasNext()) {
+                CTRst rst = sstCache.getCTRst(idIterator.next());
                 if (rst != null) {
                     writer.write(rst.xmlText(siSaveOptions));
                 }
@@ -310,8 +194,36 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void close() throws IOException {
-        if(db != null) db.close();
+    public void close() {
+        sstCache.close();
     }
+
+    private int addEntry(CTRst st, boolean keepDuplicates) {
+        if (st == null) {
+            throw new NullPointerException("Cannot add null entry to SharedStringsTable");
+        }
+        String s = xmlText(st);
+        count++;
+        if (!keepDuplicates && sstCache.containsString(s)) {
+            return sstCache.getStringIndex(s);
+        }
+
+        int idx = uniqueCount++;
+        sstCache.putStringIndex(s, idx);
+        sstCache.putCTRst(idx, st);
+        return idx;
+    }
+
+    private CTRst getEntryAt(int idx) {
+        CTRst rst = sstCache.getCTRst(idx);
+        if (rst == null) {
+            throw new NoSuchElementException();
+        }
+        return rst;
+    }
+
 }
