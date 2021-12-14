@@ -30,6 +30,8 @@ v2.1.0 added support for parsing the shared strings and comments and keeping the
 This support requires a little extra memory. The default is to just extract the text of the shared strings and comments.
 Full Format support may not work when the files are in Strict OOXML format ([POI Issue](https://bz.apache.org/bugzilla/show_bug.cgi?id=57699)).
 
+The current implementation of Full Format can be a lot slower than the plain text solution due to the extra XML parsing overhead.
+
 ## Samples
 
 There is an xlsx reading sample and also an xlsx writing sample at https://github.com/pjfanning/poi-shared-strings-sample.
