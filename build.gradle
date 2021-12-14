@@ -22,6 +22,7 @@ dependencies {
     implementation 'org.apache.xmlbeans:xmlbeans:5.0.2'
     implementation 'org.apache.commons:commons-text:1.9'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mapdb:mapdb:3.0.8'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'commons-io:commons-io:2.11.0'
     testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.32'
