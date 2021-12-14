@@ -151,25 +151,30 @@ public class TestTempFileSharedStringsTable {
             font.setBold(true);
             rts.applyFont(font);
             sst.addSharedStringItem(rts);
-            assertEquals(3, sst.getUniqueCount());
+            int expectedUniqueCount = fullFormat ? 3 : 2;
+            assertEquals(expectedUniqueCount, sst.getUniqueCount());
             assertEquals(7, sst.getCount());
             try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
                 sst.writeTo(bos);
                 try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
                     sst2.readFrom(bos.toInputStream());
-                    assertEquals(3, sst2.getUniqueCount());
+                    assertEquals(expectedUniqueCount, sst2.getUniqueCount());
                     assertEquals(7, sst2.getCount());
                     assertEquals("First string", sst2.getItemAt(0).getString());
                     assertEquals("Second string", sst2.getItemAt(1).getString());
-                    assertEquals("Second string", sst2.getItemAt(2).getString());
+                    if (fullFormat) {
+                        assertEquals("Second string", sst2.getItemAt(2).getString());
+                    }
                 }
                 try (SharedStringsTable sst3 = new SharedStringsTable()) {
                     sst3.readFrom(bos.toInputStream());
-                    assertEquals(3, sst3.getUniqueCount());
+                    assertEquals(expectedUniqueCount, sst3.getUniqueCount());
                     assertEquals(7, sst3.getCount());
                     assertEquals("First string", sst3.getItemAt(0).getString());
                     assertEquals("Second string", sst3.getItemAt(1).getString());
-                    assertEquals("Second string", sst3.getItemAt(2).getString());
+                    if (fullFormat) {
+                        assertEquals("Second string", sst3.getItemAt(2).getString());
+                    }
                 }
             }
         }
