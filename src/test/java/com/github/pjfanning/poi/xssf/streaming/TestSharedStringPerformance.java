@@ -15,7 +15,7 @@ public class TestSharedStringPerformance {
 
     @Test
     public void testH2() throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, false)) {
             log.info("h2 starting write phase");
             long writeStartTime = System.currentTimeMillis();
             for(int i = 0; i < SIZE; i++) {
