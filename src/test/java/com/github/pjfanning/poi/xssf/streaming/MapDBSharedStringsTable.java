@@ -3,7 +3,6 @@ package com.github.pjfanning.poi.xssf.streaming;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
-import org.apache.poi.util.TempFile;
 import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
@@ -56,7 +55,6 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
     private static final Logger log = LoggerFactory.getLogger(MapDBSharedStringsTable.class);
     private static final QName COUNT_QNAME = new QName("count");
     private static final QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
-    private File tempFile;
     private DB db;
     private final boolean fullFormat;
 
@@ -84,10 +82,8 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
         super();
         this.fullFormat = fullFormat;
         try {
-            tempFile = TempFile.createTempFile("poi-shared-strings", ".tmp");
-            tempFile.delete(); //the DBMaker requires that the file does not exist
             db = DBMaker
-                    .fileDB(tempFile)
+                    .tempFileDB()
                     .fileDeleteAfterClose()
                     .make();
             strings = db.hashMap("strings")
@@ -100,11 +96,9 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
                     .create();
         } catch (Error | RuntimeException e) {
             if (db != null) db.close();
-            if (tempFile != null) tempFile.delete();
             throw e;
         } catch (Exception e) {
             if (db != null) db.close();
-            if (tempFile != null) tempFile.delete();
             throw new RuntimeException(e);
         }
     }
@@ -317,6 +311,5 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
     @Override
     public void close() throws IOException {
         if(db != null) db.close();
-        if(tempFile != null) tempFile.delete();
     }
 }
