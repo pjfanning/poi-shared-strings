@@ -84,6 +84,7 @@ public class MapDBSharedStringsTable extends SharedStringsTable {
         try {
             db = DBMaker
                     .tempFileDB()
+                    .fileMmapEnableIfSupported()
                     .fileDeleteAfterClose()
                     .make();
             strings = db.hashMap("strings")
