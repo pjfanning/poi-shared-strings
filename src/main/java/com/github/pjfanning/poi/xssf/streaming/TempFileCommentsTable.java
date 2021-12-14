@@ -58,8 +58,9 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 new QName(NS_SPREADSHEETML, "text"));
     }
 
-    private final Cache<String, SerializableComment> commentsCache;
-    private final Cache<Integer, String> authorsCache;
+    private Cache<String, SerializableComment> commentsCache;
+    private Cache<Integer, String> authorsIdCache;
+    private Cache<String, Integer> authorsStringCache;
 
     public TempFileCommentsTable() {
         this(false, false);
@@ -89,8 +90,11 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             mvStore = mvStoreBuilder.open();
             comments = mvStore.openMap("comments");
             authors = mvStore.openMap("authors");
-            commentsCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
-            authorsCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+            if (caffeineCacheSize > 0) {
+                commentsCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+                authorsIdCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+                authorsStringCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+            }
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
             if (tempFile != null) tempFile.delete();
@@ -187,11 +191,17 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public String getAuthor(long authorId) {
-        return authorsCache.get((int)authorId, i -> authors.get(i));
+        return authorsIdCache == null ? authors.get(authorId)
+            : authorsIdCache.get((int)authorId, i -> authors.get(i));
     }
 
     @Override
     public int findAuthor(String author) {
+        return authorsStringCache == null ? findAuthorId(author)
+                : authorsStringCache.get(author, name -> findAuthorId(name));
+    }
+
+    private int findAuthorId(String author) {
         Iterator<Integer> authorIdIterator = authors.keyIterator(null);
         while (authorIdIterator.hasNext()) {
             Integer authorId = authorIdIterator.next();
@@ -213,8 +223,8 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
-        SerializableComment comment = commentsCache.get(cellAddress.formatAsString(),
-                address -> comments.get(address));
+        SerializableComment comment = commentsCache == null ? comments.get(cellAddress)
+            : commentsCache.get(cellAddress.formatAsString(), address -> comments.get(address));
         return comment == null ? null : new ReadOnlyXSSFComment(comment);
     }
 

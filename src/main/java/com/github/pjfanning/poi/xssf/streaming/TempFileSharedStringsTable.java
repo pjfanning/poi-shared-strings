@@ -77,7 +77,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                 new QName(NS_SPREADSHEETML, "si"));
     }
 
-    private final Cache<Integer, CTRst> rstCache;
+    private Cache<Integer, CTRst> rstCache;
 
     public TempFileSharedStringsTable() {
         this(false, false);
@@ -107,7 +107,9 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             mvStore = mvStoreBuilder.open();
             strings = mvStore.openMap("strings");
             stmap = mvStore.openMap("stmap");
-            rstCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+            if (caffeineCacheSize > 0) {
+                rstCache = Caffeine.newBuilder().maximumSize(caffeineCacheSize).build();
+            }
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
             if (tempFile != null) tempFile.delete();
@@ -207,11 +209,14 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     }
 
     private CTRst getEntryAt(int idx) {
-        return rstCache.get(idx, i -> {
-            CTRst rst = strings.get(i);
-            if (rst == null) throw new NoSuchElementException();
-            return rst;
-        });
+        return rstCache == null ? getEntryFromMap(idx)
+            : rstCache.get(idx, i -> getEntryFromMap(i));
+    }
+
+    private CTRst getEntryFromMap(int idx) {
+        CTRst rst = strings.get(idx);
+        if (rst == null) throw new NoSuchElementException();
+        return rst;
     }
 
     /**
