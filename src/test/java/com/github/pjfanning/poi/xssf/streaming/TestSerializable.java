@@ -12,12 +12,13 @@ import static org.junit.Assert.assertEquals;
 
 public class TestSerializable {
     @Test
-    public void testComment() throws Exception {
+    public void testCommentFromString() throws Exception {
         SerializableComment comment = new SerializableComment();
-        comment.setString(new XSSFRichTextString("test string"));
+        comment.setString("test string");
         comment.setAuthor("test author");
         comment.setAddress(new CellAddress("B20"));
         comment.setVisible(false);
+        assertEquals("test string", comment.getCommentText());
         try(UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
             try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                 oos.writeObject(comment);
@@ -30,6 +31,32 @@ public class TestSerializable {
                 assertEquals(comment.getString().getString(), deserializedComment.getString().getString());
                 assertEquals(comment.getAuthor(), deserializedComment.getAuthor());
                 assertEquals(comment.isVisible(), deserializedComment.isVisible());
+                assertEquals(comment.getCommentText(), deserializedComment.getCommentText());
+            }
+        }
+    }
+
+    @Test
+    public void testCommentFromXSSFRichTextString() throws Exception {
+        SerializableComment comment = new SerializableComment();
+        comment.setString(new XSSFRichTextString("test string"));
+        comment.setAuthor("test author");
+        comment.setAddress(new CellAddress("B20"));
+        comment.setVisible(false);
+        assertEquals("test string", comment.getCommentText());
+        try(UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+            try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+                oos.writeObject(comment);
+            }
+            try(ObjectInputStream ois = new ObjectInputStream(bos.toInputStream())) {
+                SerializableComment deserializedComment = (SerializableComment)ois.readObject();
+                assertEquals(comment.getRow(), deserializedComment.getRow());
+                assertEquals(comment.getColumn(), deserializedComment.getColumn());
+                assertEquals(comment.getAddress(), deserializedComment.getAddress());
+                assertEquals(comment.getString().getString(), deserializedComment.getString().getString());
+                assertEquals(comment.getAuthor(), deserializedComment.getAuthor());
+                assertEquals(comment.isVisible(), deserializedComment.isVisible());
+                assertEquals(comment.getCommentText(), deserializedComment.getCommentText());
             }
         }
     }

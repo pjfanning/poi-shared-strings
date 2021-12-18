@@ -1,5 +1,6 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.poi.ooxml.POIXMLException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
@@ -61,7 +62,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     /**
      *  Array of individual string items in the Shared String table.
      */
-    private final MVMap<Integer, CTRst> strings;
+    private final MVMap<Integer, String> strings;
 
     /**
      *  Maps strings and their indexes in the <code>strings</code> arrays
@@ -169,10 +170,10 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                 } catch (XmlException e) {
                                     throw new IOException("Failed to parse shared string text", e);
                                 }
-                                addEntry(new XSSFRichTextString(sst.getSiArray(0)).getCTRst(), true);
+                                addRSTEntry(new XSSFRichTextString(sst.getSiArray(0)).getCTRst(), true);
                             } else {
                                 String text = TextParser.parseCT_Rst(xmlEventReader);
-                                addEntry(new XSSFRichTextString(text).getCTRst(), true);
+                                addPlainStringEntry(text, true);
                             }
                         }
                     }
@@ -195,10 +196,16 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         }
     }
 
-    private CTRst getEntryAt(int idx) {
-        CTRst rst = strings.get(idx);
-        if (rst == null) throw new NoSuchElementException();
-        return rst;
+    private CTRst getRSTEntryAt(int idx) throws XmlException, IOException {
+        String str = strings.get(idx);
+        if (str == null) throw new NoSuchElementException();
+        return CTRst.Factory.parse(new StringReader(str));
+    }
+
+    private String getPlainStringEntryAt(int idx) {
+        String str = strings.get(idx);
+        if (str == null) throw new NoSuchElementException();
+        return str;
     }
 
     /**
@@ -207,10 +214,21 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
      * @param idx index of item to return.
      * @return the item at the specified position in this Shared String table.
      * @throws NoSuchElementException if no item exists for this index
+     * @throws POIXMLException if the item cannot be parsed
      */
     @Override
     public RichTextString getItemAt(int idx) {
-        return new XSSFRichTextString(getEntryAt(idx));
+        try {
+            if (fullFormat) {
+                return new XSSFRichTextString(getRSTEntryAt(idx));
+            } else {
+                return new XSSFRichTextString(getPlainStringEntryAt(idx));
+            }
+        } catch (NoSuchElementException nsee) {
+            throw nsee;
+        } catch (Exception e) {
+            throw new POIXMLException("Failed to parse shared string", e);
+        }
     }
 
     /**
@@ -236,7 +254,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         return uniqueCount;
     }
 
-    private int addEntry(CTRst st, boolean keepDuplicates) {
+    private int addRSTEntry(CTRst st, boolean keepDuplicates) {
         if (st == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
@@ -248,7 +266,22 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
 
         int idx = uniqueCount++;
         stmap.put(s, idx);
-        strings.put(idx, st);
+        strings.put(idx, st.xmlText());
+        return idx;
+    }
+
+    private int addPlainStringEntry(String string, boolean keepDuplicates) {
+        if (string == null) {
+            throw new NullPointerException("Cannot add null entry to SharedStringsTable");
+        }
+        count++;
+        if (!keepDuplicates && stmap.containsKey(string)) {
+            return stmap.get(string);
+        }
+
+        int idx = uniqueCount++;
+        stmap.put(string, idx);
+        strings.put(idx, string);
         return idx;
     }
 
@@ -268,7 +301,11 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
-        return addEntry(((XSSFRichTextString) string).getCTRst(), false);
+        if (fullFormat) {
+            return addRSTEntry(((XSSFRichTextString) string).getCTRst(), false);
+        } else {
+            return addPlainStringEntry(string.getString(), false);
+        }
     }
 
     /**
@@ -302,9 +339,9 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             Iterator<Integer> idIter = strings.keyIterator(null);
             while (idIter.hasNext()) {
                 Integer stringId = idIter.next();
-                CTRst rst = strings.get(stringId);
+                XSSFRichTextString rst = (XSSFRichTextString)getItemAt(stringId);
                 if (rst != null) {
-                    writer.write(rst.xmlText(siSaveOptions));
+                    writer.write(rst.getCTRst().xmlText(siSaveOptions));
                 }
             }
             writer.write("</sst>");
