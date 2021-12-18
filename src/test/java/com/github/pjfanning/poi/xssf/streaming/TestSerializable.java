@@ -18,6 +18,7 @@ public class TestSerializable {
         comment.setAuthor("test author");
         comment.setAddress(new CellAddress("B20"));
         comment.setVisible(false);
+        assertEquals("test string", comment.getCommentText());
         try(UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
             try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                 oos.writeObject(comment);
@@ -30,6 +31,7 @@ public class TestSerializable {
                 assertEquals(comment.getString().getString(), deserializedComment.getString().getString());
                 assertEquals(comment.getAuthor(), deserializedComment.getAuthor());
                 assertEquals(comment.isVisible(), deserializedComment.isVisible());
+                assertEquals(comment.getCommentText(), deserializedComment.getCommentText());
             }
         }
     }
@@ -41,6 +43,7 @@ public class TestSerializable {
         comment.setAuthor("test author");
         comment.setAddress(new CellAddress("B20"));
         comment.setVisible(false);
+        assertEquals("test string", comment.getCommentText());
         try(UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
             try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                 oos.writeObject(comment);
@@ -53,6 +56,7 @@ public class TestSerializable {
                 assertEquals(comment.getString().getString(), deserializedComment.getString().getString());
                 assertEquals(comment.getAuthor(), deserializedComment.getAuthor());
                 assertEquals(comment.isVisible(), deserializedComment.isVisible());
+                assertEquals(comment.getCommentText(), deserializedComment.getCommentText());
             }
         }
     }

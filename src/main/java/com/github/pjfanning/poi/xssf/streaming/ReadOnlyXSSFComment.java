@@ -48,6 +48,15 @@ public class ReadOnlyXSSFComment extends XSSFComment {
     }
 
     /**
+     * If you are only interested in the text of the comment and don't need the
+     * full {@link XSSFRichTextString}, then this method is more efficient.
+     * @return the text of the comment
+     */
+    public String getCommentText() {
+        return delegate.getCommentText();
+    }
+
+    /**
      * Not implemented. This class only supports read-only methods.
      * @throws IllegalStateException
      */

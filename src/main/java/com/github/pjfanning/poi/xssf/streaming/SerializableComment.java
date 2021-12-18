@@ -96,6 +96,14 @@ class SerializableComment implements Serializable {
         return new XSSFRichTextString(getCTRst());
     }
 
+    public String getCommentText() {
+        if (fullFormat) {
+            return getString().getString();
+        } else {
+            return commentText;
+        }
+    }
+
     public void setString(RichTextString string) {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
