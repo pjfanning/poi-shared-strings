@@ -1,8 +1,10 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import org.apache.poi.ooxml.POIXMLException;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.xmlbeans.XmlException;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTRst;
 
 import java.io.Serializable;
@@ -12,14 +14,14 @@ class SerializableComment implements Serializable {
     private static final long serialVersionUID = 7829136421241571165L;
 
     private String author;
-    private CTRst ctRst; //CTRstImpl is Serializable
+    private String commentText;
+    private boolean fullFormat = false;
+    private transient CTRst ctRst; //CTRstImpl is Serializable but very inefficient
     private String addressAsText; //Serializable version of cellAddress
     private transient CellAddress cellAddress; //CellAddress is not Serializable
     private boolean visible = true;
 
-    public SerializableComment() {
-
-    }
+    public SerializableComment() {}
 
     public void setAddress(CellAddress address) {
         this.cellAddress = address;
@@ -86,20 +88,47 @@ class SerializableComment implements Serializable {
         setAddress(row, address.getColumn());
     }
 
+    /**
+     * @return comment as a rich string
+     * @throws POIXMLException if the value is not parseable
+     */
     public XSSFRichTextString getString() {
-        return new XSSFRichTextString(ctRst);
+        return new XSSFRichTextString(getCTRst());
     }
 
     public void setString(RichTextString string) {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
         }
-        this.ctRst = ((XSSFRichTextString)string).getCTRst();
+        ctRst = ((XSSFRichTextString)string).getCTRst();
+        fullFormat = true;
+        commentText = ctRst.xmlText();
     }
 
     public void setString(String text) {
-        XSSFRichTextString rts = new XSSFRichTextString();
-        rts.setString(text);
-        setString(rts);
+        commentText = text;
+        fullFormat = false;
+    }
+
+    private CTRst getCTRst() throws POIXMLException {
+        if (ctRst == null && commentText != null) {
+            //ctRst is transient so might need to be recreated from commentText
+            synchronized (this) {
+                if (ctRst == null && commentText != null) {
+                    if (fullFormat) {
+                        try {
+                            ctRst = CTRst.Factory.parse(commentText);
+                        } catch (XmlException e) {
+                            throw new POIXMLException("Could not parse comment rich text string", e);
+                        }
+                    } else {
+                        XSSFRichTextString richTextString = new XSSFRichTextString();
+                        richTextString.setString(commentText);
+                        ctRst = richTextString.getCTRst();
+                    }
+                }
+            }
+        }
+        return ctRst;
     }
 }
