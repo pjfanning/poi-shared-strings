@@ -227,7 +227,9 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     @Override
     public void close() {
         if(mvStore != null) mvStore.closeImmediately();
-        if(tempFile != null) tempFile.delete();
+        if(tempFile != null && !tempFile.delete()) {
+            log.debug("failed to delete temp file - probably already deleted");
+        }
     }
 
     /**

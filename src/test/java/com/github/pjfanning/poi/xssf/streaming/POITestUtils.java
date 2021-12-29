@@ -16,7 +16,9 @@ import static org.junit.Assert.assertTrue;
 /**
  * Util class for POI JUnit TestCases, which provide additional features 
  */
-public final class POITestCase {
+public final class POITestUtils {
+
+    private POITestUtils() {}
 
     /**
      * Utility method to get the value of a private/protected field.

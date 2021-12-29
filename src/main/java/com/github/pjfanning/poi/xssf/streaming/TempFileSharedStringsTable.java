@@ -354,6 +354,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     @Override
     public void close() throws IOException {
         if(mvStore != null) mvStore.closeImmediately();
-        if(tempFile != null) tempFile.delete();
+        if(tempFile != null && !tempFile.delete()) {
+            log.debug("failed to delete temp file - probably already deleted");
+        }
     }
 }

@@ -22,7 +22,7 @@ public class TestSXSSFWorkbookWithTempFileSharedStringsTable {
             SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),
                     SXSSFWorkbook.DEFAULT_WINDOW_SIZE, true, true);
 
-            SharedStringsTable sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
+            SharedStringsTable sss = POITestUtils.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
 
             assertNotNull(sss);
             assertEquals(TempFileSharedStringsTable.class, sss.getClass());
@@ -33,8 +33,8 @@ public class TestSXSSFWorkbookWithTempFileSharedStringsTable {
             row.createCell(1).setCellValue("B");
             row.createCell(2).setCellValue("A");
 
-            XSSFWorkbook xssfWorkbook = POITestCase.writeOutAndReadBack(wb);
-            sss = POITestCase.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
+            XSSFWorkbook xssfWorkbook = POITestUtils.writeOutAndReadBack(wb);
+            sss = POITestUtils.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
             assertEquals(2, sss.getUniqueCount());
             assertTrue(wb.dispose());
 

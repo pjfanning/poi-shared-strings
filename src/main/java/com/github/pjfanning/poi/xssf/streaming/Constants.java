@@ -25,4 +25,6 @@ class Constants {
     static final XMLInputFactory XML_INPUT_FACTORY = XMLHelper.newXMLInputFactory();
     static final XMLOutputFactory XML_OUTPUT_FACTORY = XMLHelper.newXMLOutputFactory();
     static final XMLEventFactory XML_EVENT_FACTORY = XMLHelper.newXMLEventFactory();
+
+    private Constants() {}
 }
