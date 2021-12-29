@@ -4,10 +4,19 @@ plugins {
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version "1.1.0"
     id 'org.cyclonedx.bom' version "1.4.1"
+    id 'org.sonarqube' version "3.3"
 }
 
 group = 'com.github.pjfanning'
 version = '2.3.4-SNAPSHOT'
+
+sonarqube {
+  properties {
+    property "sonar.projectKey", "pjfanning_poi-shared-strings"
+    property "sonar.organization", "pjfanning"
+    property "sonar.host.url", "https://sonarcloud.io"
+  }
+}
 
 description = 'Memory efficient Shared String Table and Comments Table for POI'
 
