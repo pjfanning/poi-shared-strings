@@ -121,7 +121,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                       boolean fullFormat) throws IOException {
         this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
-        if (parts.size() > 0) {
+        if (!parts.isEmpty()) {
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }

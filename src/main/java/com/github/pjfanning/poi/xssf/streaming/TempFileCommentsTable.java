@@ -101,7 +101,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                                  boolean fullFormat) throws IOException {
         this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHEET_COMMENTS.getContentType());
-        if (parts.size() > 0) {
+        if (!parts.isEmpty()) {
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
