@@ -80,11 +80,15 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             authors = mvStore.openMap("authors");
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
-            if (tempFile != null) tempFile.delete();
+            if (tempFile != null && !tempFile.delete()) {
+                log.debug("failed to delete temp file - probably already deleted");
+            }
             throw e;
         } catch (Exception e) {
             if (mvStore != null) mvStore.closeImmediately();
-            if (tempFile != null) tempFile.delete();
+            if (tempFile != null && !tempFile.delete()) {
+                log.debug("failed to delete temp file - probably already deleted");
+            }
             throw new RuntimeException(e);
         }
     }
