@@ -100,11 +100,15 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
             stmap = mvStore.openMap("stmap");
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
-            if (tempFile != null) tempFile.delete();
+            if (tempFile != null && !tempFile.delete()) {
+                log.debug("failed to delete temp file - probably already deleted");
+            }
             throw e;
         } catch (Exception e) {
             if (mvStore != null) mvStore.closeImmediately();
-            if (tempFile != null) tempFile.delete();
+            if (tempFile != null && !tempFile.delete()) {
+                log.debug("failed to delete temp file - probably already deleted");
+            }
             throw new RuntimeException(e);
         }
     }
@@ -117,7 +121,7 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
                                       boolean fullFormat) throws IOException {
         this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHARED_STRINGS.getContentType());
-        if (parts.size() > 0) {
+        if (!parts.isEmpty()) {
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
@@ -354,6 +358,8 @@ public class TempFileSharedStringsTable extends SharedStringsTable {
     @Override
     public void close() throws IOException {
         if(mvStore != null) mvStore.closeImmediately();
-        if(tempFile != null) tempFile.delete();
+        if(tempFile != null && !tempFile.delete()) {
+            log.debug("failed to delete temp file - probably already deleted");
+        }
     }
 }

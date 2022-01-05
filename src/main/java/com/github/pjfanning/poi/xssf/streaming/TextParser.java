@@ -19,6 +19,8 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 
 class TextParser {
 
+    private TextParser() {}
+
     /**
      * Parses a {@code <si>} String Item. Returns just the text and drops the formatting. See <a
      * href="https://msdn.microsoft.com/en-us/library/documentformat.openxml.spreadsheet.sharedstringitem.aspx">xmlschema

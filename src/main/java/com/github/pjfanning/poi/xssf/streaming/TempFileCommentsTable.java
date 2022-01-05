@@ -85,11 +85,15 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             authors = mvStore.openMap("authors");
         } catch (Error | RuntimeException e) {
             if (mvStore != null) mvStore.closeImmediately();
-            if (tempFile != null) tempFile.delete();
+            if (tempFile != null && !tempFile.delete()) {
+                log.debug("failed to delete temp file - probably already deleted");
+            }
             throw e;
         } catch (Exception e) {
             if (mvStore != null) mvStore.closeImmediately();
-            if (tempFile != null) tempFile.delete();
+            if (tempFile != null && !tempFile.delete()) {
+                log.debug("failed to delete temp file - probably already deleted");
+            }
             throw new RuntimeException(e);
         }
     }
@@ -102,7 +106,7 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                                  boolean fullFormat) throws IOException {
         this(encryptTempFiles, fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHEET_COMMENTS.getContentType());
-        if (parts.size() > 0) {
+        if (!parts.isEmpty()) {
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
@@ -306,7 +310,9 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
     @Override
     public void close() {
         if(mvStore != null) mvStore.closeImmediately();
-        if(tempFile != null) tempFile.delete();
+        if(tempFile != null && !tempFile.delete()) {
+            log.debug("failed to delete temp file - probably already deleted");
+        }
     }
 
     /**
