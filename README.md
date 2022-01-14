@@ -17,7 +17,7 @@ It is only useful if you expect to need to support large numbers of shared strin
 
 v2.0.2 added support for `TempFileCommentsTable` which works in a similar way to `TempFileSharedStringsTable`.
 
-So far, TempFileCommentsTable only supports read use cases. It cannot currently be used with SXSSFWorkbook
+Up until v2.4.0, TempFileCommentsTable only supported read use cases. With v2.4.0, it can now be used with SXSSFWorkbook
 like TempFileSharedStringsTable can.
 
 This class can be used instead of the POI [CommentsTable](https://poi.apache.org/apidocs/dev/org/apache/poi/xssf/model/CommentsTable.html).
