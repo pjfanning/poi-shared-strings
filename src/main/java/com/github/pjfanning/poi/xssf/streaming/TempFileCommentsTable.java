@@ -1,19 +1,24 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
+import com.microsoft.schemas.vml.CTShape;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackagePart;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.util.Internal;
 import org.apache.poi.util.TempFile;
+import org.apache.poi.util.Units;
 import org.apache.poi.xssf.model.Comments;
-import org.apache.poi.xssf.usermodel.XSSFComment;
-import org.apache.poi.xssf.usermodel.XSSFRelation;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.usermodel.*;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTComment;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCommentList;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CommentsDocument;
 import org.slf4j.Logger;
@@ -36,15 +41,15 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
  * The comments table contains all the necessary information for displaying the string: the text, formatting
  * properties, and phonetic properties (for East Asian languages).
  * </p>
- * This implementation does not extend <code>CommentsTable</code>, so cannot be used for
- * creating new comments - it can only be used for reading existing comments from saved files.
  */
 public class TempFileCommentsTable extends POIXMLDocumentPart implements Comments, AutoCloseable {
     private static Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
 
     private File tempFile;
     private MVStore mvStore;
+    private Sheet sheet;
 
+    private boolean ignoreDrawing = false;
     private final boolean fullFormat;
     private final MVMap<String, SerializableComment> comments;
     private final MVMap<Integer, String> authors;
@@ -105,6 +110,28 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             PackagePart sstPart = parts.get(0);
             this.readFrom(sstPart.getInputStream());
         }
+    }
+
+    /**
+     * @param ignoreDrawing set to true if you don't need the drawing/shape data on the comments
+     *                      (default is false) - ignoring the drawing/shape data can save memory
+     */
+    public void setIgnoreDrawing(boolean ignoreDrawing) {
+        this.ignoreDrawing = ignoreDrawing;
+    }
+
+    /**
+     * @return whether to ignore the drawing/shape data (default is false) -
+     *         ignoring the drawing/shape data can save memory
+     */
+    public boolean isIgnoreDrawing() {
+        return ignoreDrawing;
+    }
+
+    @Override
+    @Internal
+    public void setSheet(Sheet sheet) {
+        this.sheet = sheet;
     }
 
     @Override
@@ -178,38 +205,37 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
 
     @Override
     public int findAuthor(String author) {
+        String nullSafeAuthor = author == null ? "" : author;
         Iterator<Integer> authorIdIterator = authors.keyIterator(null);
         while (authorIdIterator.hasNext()) {
             Integer authorId = authorIdIterator.next();
             String existingAuthor = authorId == null ? null : authors.get(authorId);
-            if (existingAuthor == null) {
-                if (author == null) {
-                    return authorId;
-                }
-            } else {
-                if (existingAuthor.equals(author)) {
-                    return authorId;
-                }
+            if (nullSafeAuthor.equals(existingAuthor)) {
+                return authorId;
             }
         }
         int index = getNumberOfAuthors();
-        authors.put(index, author);
+        if (index == 0 && !nullSafeAuthor.equals("")) {
+            authors.put(index++, "");
+        }
+        authors.put(index, nullSafeAuthor);
         return index;
     }
 
     @Override
     public XSSFComment findCellComment(CellAddress cellAddress) {
-        SerializableComment comment = comments.get(cellAddress.formatAsString());
-        return comment == null ? null : new ReadOnlyXSSFComment(comment);
+        SerializableComment serializableComment = comments.get(cellAddress.formatAsString());
+        if (serializableComment == null) {
+            return null;
+        }
+        XSSFVMLDrawing vml = getVMLDrawing(sheet, false);
+        return new DelegatingXSSFComment(this, serializableComment,
+                vml == null ? null : vml.findCommentShape(cellAddress.getRow(), cellAddress.getColumn()));
     }
 
-    /**
-     * Not implemented. This class only supports read-only view of Comments.
-     * @throws IllegalStateException
-     */
     @Override
     public boolean removeComment(CellAddress cellRef) {
-        throw new IllegalStateException("Not Implemented - this class only supports read-only view of Comments");
+        return comments.remove(cellRef.formatAsString()) != null;
     }
 
     @Override
@@ -226,6 +252,59 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 return new CellAddress(keyIterator.next());
             }
         };
+    }
+
+    @Override
+    public XSSFComment createNewComment(ClientAnchor clientAnchor) {
+        XSSFVMLDrawing vml = getVMLDrawing(sheet, true);
+        CTShape vmlShape = vml == null ? null : vml.newCommentShape();
+        if (vmlShape != null && clientAnchor instanceof XSSFClientAnchor && ((XSSFClientAnchor)clientAnchor).isSet()) {
+            // convert offsets from emus to pixels since we get a
+            // DrawingML-anchor
+            // but create a VML Drawing
+            int dx1Pixels = clientAnchor.getDx1() / Units.EMU_PER_PIXEL;
+            int dy1Pixels = clientAnchor.getDy1() / Units.EMU_PER_PIXEL;
+            int dx2Pixels = clientAnchor.getDx2() / Units.EMU_PER_PIXEL;
+            int dy2Pixels = clientAnchor.getDy2() / Units.EMU_PER_PIXEL;
+            String position = clientAnchor.getCol1() + ", " + dx1Pixels + ", " + clientAnchor.getRow1() + ", " + dy1Pixels + ", " +
+                    clientAnchor.getCol2() + ", " + dx2Pixels + ", " + clientAnchor.getRow2() + ", " + dy2Pixels;
+            vmlShape.getClientDataArray(0).setAnchorArray(0, position);
+        }
+        CellAddress ref = new CellAddress(clientAnchor.getRow1(), clientAnchor.getCol1());
+
+        if (findCellComment(ref) != null) {
+            throw new IllegalArgumentException("Multiple cell comments in one cell are not allowed, cell: " + ref);
+        }
+
+        String key = ref.formatAsString();
+        CTComment ctComment = CTComment.Factory.newInstance();
+        ctComment.setRef(key);
+        SerializableComment serializableComment = new SerializableComment();
+        serializableComment.setAddress(ref);
+        comments.append(key, serializableComment);
+
+        return new XSSFComment(this, ctComment, vmlShape);
+    }
+
+    @Override
+    public void referenceUpdated(CellAddress oldReference, XSSFComment comment) {
+        removeComment(oldReference);
+        addToMap(comment);
+    }
+
+    @Override
+    public void commentUpdated(XSSFComment comment) {
+        removeComment(comment.getAddress());
+        addToMap(comment);
+    }
+
+    private void addToMap(XSSFComment comment) {
+        SerializableComment serializableComment = new SerializableComment();
+        serializableComment.setAddress(comment.getAddress());
+        serializableComment.setString(comment.getString());
+        serializableComment.setAuthor(comment.getAuthor());
+        serializableComment.setVisible(comment.isVisible());
+        comments.put(comment.getAddress().formatAsString(), serializableComment);
     }
 
     @Override
@@ -264,8 +343,10 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
                 if (comment != null) {
                     writer.write("<comment ref=\"");
                     writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
+                    String author = comment.getAuthor();
+                    int authorId = findAuthor(author);
                     writer.write("\" authorId=\"");
-                    writer.write(Integer.toString(findAuthor(comment.getAuthor())));
+                    writer.write(Integer.toString(authorId));
                     writer.write("\">");
                     XSSFRichTextString rts = comment.getString();
                     if (rts != null) {
@@ -332,5 +413,16 @@ public class TempFileCommentsTable extends POIXMLDocumentPart implements Comment
             }
         }
         return text;
+    }
+
+    private XSSFVMLDrawing getVMLDrawing(Sheet sheet, boolean autocreate) {
+        if (!ignoreDrawing) {
+            if (sheet instanceof XSSFSheet) {
+                return ((XSSFSheet)sheet).getVMLDrawing(autocreate);
+            } else if (sheet instanceof SXSSFSheet) {
+                return ((SXSSFSheet)sheet).getVMLDrawing(autocreate);
+            }
+        }
+        return null;
     }
 }

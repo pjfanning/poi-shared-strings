@@ -2,15 +2,27 @@ package com.github.pjfanning.poi.xssf.streaming;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
+import org.apache.poi.ss.usermodel.ClientAnchor;
+import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.util.TempFile;
 import org.apache.poi.xssf.model.CommentsTable;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -80,10 +92,154 @@ public class TestTempFileCommentsTable {
             assertEquals(1, ct.findAuthor("new-author"));
             assertEquals("new-author", ct.getAuthor(1));
 
-            XSSFRichTextString testComment = ct.findCellComment(addresses.get(0)).getString();
+            XSSFComment testComment = ct.findCellComment(addresses.get(0));
+            XSSFRichTextString testCommentText = testComment.getString();
             assertTrue("comment text contains expected value?",
-                    testComment.getString().contains("Gaeilge"));
-            assertEquals(0, testComment.numFormattingRuns());
+                    testCommentText.getString().contains("Gaeilge"));
+            assertEquals(0, testCommentText.numFormattingRuns());
+            //not set because there is no sheet data and related VMLDrawing data
+            assertNull("client anchor not set?", testComment.getClientAnchor());
+        }
+    }
+
+    @Test
+    public void testMoveComment() throws Exception {
+        try (
+                SXSSFWorkbook workbook = new SXSSFWorkbook();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
+        ) {
+            CreationHelper factory = workbook.getCreationHelper();
+            SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
+            SXSSFRow row = sheet.createRow(0);
+            SXSSFCell cell = row.createCell(0);
+            ClientAnchor anchor = factory.createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setCol2(1);
+            anchor.setRow1(row.getRowNum());
+            anchor.setRow2(row.getRowNum());
+            XSSFComment comment = commentsTable.createNewComment(anchor);
+            String uniqueText = UUID.randomUUID().toString();
+            comment.setString(uniqueText);
+            comment.setAuthor("author" + uniqueText);
+
+            XSSFComment comment1 = commentsTable.findCellComment(new CellAddress("A1"));
+            assertEquals(comment.getString().getString(), comment1.getString().getString());
+
+            comment.setAddress(1, 1);
+            assertNull("no longer a comment on cell A1?", commentsTable.findCellComment(new CellAddress("A1")));
+
+            XSSFComment comment2 = commentsTable.findCellComment(new CellAddress("B2"));
+            assertEquals(comment.getString().getString(), comment2.getString().getString());
+        }
+    }
+
+    @Test
+    public void testMoveCommentCopy() throws Exception {
+        try (
+                SXSSFWorkbook workbook = new SXSSFWorkbook();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
+        ) {
+            CreationHelper factory = workbook.getCreationHelper();
+            SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
+            SXSSFRow row = sheet.createRow(0);
+            SXSSFCell cell = row.createCell(0);
+            ClientAnchor anchor = factory.createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setCol2(1);
+            anchor.setRow1(row.getRowNum());
+            anchor.setRow2(row.getRowNum());
+            XSSFComment comment = commentsTable.createNewComment(anchor);
+            String uniqueText = UUID.randomUUID().toString();
+            comment.setString(uniqueText);
+            comment.setAuthor("author" + uniqueText);
+
+            XSSFComment comment1 = commentsTable.findCellComment(new CellAddress("A1"));
+            assertEquals(comment.getString().getString(), comment1.getString().getString());
+
+            //like testMoveComment but moves the copy of the comment (comment1) instead
+            comment1.setAddress(1, 1);
+            assertNull("no longer a comment on cell A1?", commentsTable.findCellComment(new CellAddress("A1")));
+
+            XSSFComment comment2 = commentsTable.findCellComment(new CellAddress("B2"));
+            assertEquals(comment.getString().getString(), comment2.getString().getString());
+        }
+    }
+
+    @Test
+    public void testModifyComment() throws Exception {
+        try (
+                SXSSFWorkbook workbook = new SXSSFWorkbook();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
+        ) {
+            CreationHelper factory = workbook.getCreationHelper();
+            SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
+            SXSSFRow row = sheet.createRow(0);
+            SXSSFCell cell = row.createCell(0);
+            ClientAnchor anchor = factory.createClientAnchor();
+            anchor.setCol1(0);
+            anchor.setCol2(1);
+            anchor.setRow1(row.getRowNum());
+            anchor.setRow2(row.getRowNum());
+            XSSFComment comment = commentsTable.createNewComment(anchor);
+            comment.setString("initText");
+            comment.setAuthor("initAuthor");
+
+            XSSFComment comment1 = commentsTable.findCellComment(new CellAddress("A1"));
+            assertEquals(comment.getString().getString(), comment1.getString().getString());
+            assertEquals(comment.getAuthor(), comment1.getAuthor());
+
+            String uniqueText = UUID.randomUUID().toString();
+            comment.setString(uniqueText);
+            comment.setAuthor("author" + uniqueText);
+
+            XSSFComment comment2 = commentsTable.findCellComment(new CellAddress("A1"));
+            assertEquals(comment.getString().getString(), comment2.getString().getString());
+            assertEquals(comment.getAuthor(), comment2.getAuthor());
+        }
+    }
+
+    @Test
+    public void stressTest() throws Exception {
+        final int limit = 100;
+        File tempFile = TempFile.createTempFile("comments-stress", ".tmp");
+        try (
+                SXSSFWorkbook workbook = new SXSSFWorkbook();
+                TempFileCommentsTable commentsTable = new TempFileCommentsTable(false, true)
+        ) {
+            CreationHelper factory = workbook.getCreationHelper();
+            SXSSFSheet sheet = workbook.createSheet();
+            commentsTable.setSheet(sheet);
+            for (int i = 0; i < limit; i++) {
+                SXSSFRow row = sheet.createRow(i);
+                SXSSFCell cell = row.createCell(0);
+                ClientAnchor anchor = factory.createClientAnchor();
+                anchor.setCol1(0);
+                anchor.setCol2(1);
+                anchor.setRow1(row.getRowNum());
+                anchor.setRow2(row.getRowNum());
+                XSSFComment comment = commentsTable.createNewComment(anchor);
+                String uniqueText = UUID.randomUUID().toString();
+                comment.setString(uniqueText);
+                comment.setAuthor("author" + uniqueText);
+            }
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                commentsTable.writeTo(fos);
+            }
+            try (
+                    FileInputStream fis = new FileInputStream(tempFile);
+                    TempFileCommentsTable commentsTable2 = new TempFileCommentsTable(false, true)
+            ) {
+                commentsTable2.readFrom(fis);
+                //also includes the empty author that is automatically added
+                assertEquals(limit + 1, commentsTable2.getNumberOfAuthors());
+                assertEquals(0, commentsTable2.findAuthor(""));
+                assertEquals(limit, commentsTable2.getNumberOfComments());
+            }
+        } finally {
+            tempFile.delete();
         }
     }
 
@@ -108,15 +264,16 @@ public class TestTempFileCommentsTable {
             assertEquals(1, ct.findAuthor("new-author"));
             assertEquals("new-author", ct.getAuthor(1));
 
-            ReadOnlyXSSFComment readOnlyXSSFComment = (ReadOnlyXSSFComment)ct.findCellComment(addresses.get(0));
-            XSSFRichTextString testComment = readOnlyXSSFComment.getString();
+            DelegatingXSSFComment delegatingXSSFComment = (DelegatingXSSFComment)ct.findCellComment(addresses.get(0));
+            assertNull("ctShape not set?", delegatingXSSFComment.getCTShape());
+            XSSFRichTextString testComment = delegatingXSSFComment.getString();
             assertEquals("comment top row1 (index0)",
                     testComment.getString()
                             .replace("\n", "").replace("\r", ""));
             int expectedRuns = fullFormat ? 2 : 0;
             assertEquals(expectedRuns, testComment.numFormattingRuns());
             assertEquals("comment top row1 (index0)",
-                readOnlyXSSFComment.getCommentText().replace("\n", "").replace("\r", ""));
+                delegatingXSSFComment.getCommentText().replace("\n", "").replace("\r", ""));
         }
     }
 
