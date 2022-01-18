@@ -43,6 +43,12 @@ java {
     withSourcesJar()
 }
 
+tasks.named('jar') {
+    manifest {
+        attributes('Automatic-Module-Name': 'com.github.pjfanning.poi-shared-strings')
+    }
+}
+
 nexusPublishing {
     repositories {
         sonatype()
