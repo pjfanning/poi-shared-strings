@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.slf4j:slf4j-api:1.7.33'
+    implementation 'org.slf4j:slf4j-api:1.7.35'
     implementation 'com.h2database:h2:2.1.210'
     implementation 'org.apache.poi:poi-ooxml:5.2.0'
     implementation 'org.apache.poi:poi:5.2.0'
@@ -34,7 +34,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'commons-io:commons-io:2.11.0'
-    testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.34'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:1.7.35'
     testRuntimeOnly 'org.apache.logging.log4j:log4j-to-slf4j:2.17.1'
 }
 
