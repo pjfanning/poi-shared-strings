@@ -45,7 +45,7 @@ java {
 
 tasks.named('jar') {
     manifest {
-        attributes('Automatic-Module-Name': 'com.github.pjfanning.poi-shared-strings')
+        attributes('Automatic-Module-Name': 'com.github.pjfanning.poisharedstrings')
     }
 }
 
