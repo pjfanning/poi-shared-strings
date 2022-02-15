@@ -30,15 +30,15 @@ public class TempFileCommentsTable extends CommentsTableBase {
     private MVMap<String, SerializableComment> mvComments;
     private MVMap<Integer, String> mvAuthors;
 
-    public TempFileCommentsTable() {
+    public TempFileCommentsTable() throws IOException {
         this(false, false);
     }
 
-    public TempFileCommentsTable(boolean encryptTempFiles) {
+    public TempFileCommentsTable(boolean encryptTempFiles) throws IOException {
         this(encryptTempFiles, false);
     }
 
-    public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat) {
+    public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat) throws IOException {
         super(fullFormat);
         try {
             tempFile = TempFile.createTempFile("poi-comments", ".tmp");
@@ -54,7 +54,7 @@ public class TempFileCommentsTable extends CommentsTableBase {
             comments = mvComments;
             mvAuthors = mvStore.openMap("authors");
             authors = mvAuthors;
-        } catch (Error | RuntimeException e) {
+        } catch (Error | IOException e) {
             if (mvStore != null) mvStore.closeImmediately();
             if (tempFile != null && !tempFile.delete()) {
                 log.debug("failed to delete temp file - probably already deleted");
@@ -65,7 +65,7 @@ public class TempFileCommentsTable extends CommentsTableBase {
             if (tempFile != null && !tempFile.delete()) {
                 log.debug("failed to delete temp file - probably already deleted");
             }
-            throw new RuntimeException(e);
+            throw new IOException(e);
         }
     }
 
