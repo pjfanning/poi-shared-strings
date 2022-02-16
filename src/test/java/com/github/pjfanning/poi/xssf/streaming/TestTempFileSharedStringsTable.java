@@ -65,9 +65,23 @@ public class TestTempFileSharedStringsTable {
     }
 
     @Test(expected = NoSuchElementException.class)
+    public void testGetStringMissingEntry() throws Exception {
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+            String str = sst.getString(0);
+        }
+    }
+
+    @Test(expected = NoSuchElementException.class)
     public void testReadMissingEntryFullFormat() throws Exception {
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
             RichTextString rts = sst.getItemAt(0);
+        }
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void testGetStringMissingEntryFullFormat() throws Exception {
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+            String str = sst.getString(0);
         }
     }
 
@@ -110,8 +124,11 @@ public class TestTempFileSharedStringsTable {
             assertEquals(15, sst.getUniqueCount());
             assertEquals(19, sst.getCount());
             assertEquals("Lorem", sst.getItemAt(0).getString());
+            assertEquals("Lorem", sst.getString(0));
             assertEquals("The quick brown fox jumps over the lazy dog",
                     sst.getItemAt(14).getString());
+            assertEquals("The quick brown fox jumps over the lazy dog",
+                    sst.getString(14));
             int expectedFormattingRuns = fullFormat ? 11: 0;
             assertEquals(expectedFormattingRuns, sst.getItemAt(14).numFormattingRuns());
         }
@@ -124,6 +141,7 @@ public class TestTempFileSharedStringsTable {
             assertEquals(1, sst.getCount());
             assertEquals(1, sst.getUniqueCount());
             assertEquals("shared styled string", sst.getItemAt(0).getString());
+            assertEquals("shared styled string", sst.getString(0));
         }
     }
 
@@ -134,6 +152,7 @@ public class TestTempFileSharedStringsTable {
             assertEquals(60, sst.getCount());
             assertEquals(38, sst.getUniqueCount());
             assertEquals("City", sst.getItemAt(0).getString());
+            assertEquals("City", sst.getString(0));
         }
     }
 
@@ -161,9 +180,12 @@ public class TestTempFileSharedStringsTable {
                     assertEquals(expectedUniqueCount, sst2.getUniqueCount());
                     assertEquals(7, sst2.getCount());
                     assertEquals("First string", sst2.getItemAt(0).getString());
+                    assertEquals("First string", sst2.getString(0));
                     assertEquals("Second string", sst2.getItemAt(1).getString());
+                    assertEquals("Second string", sst2.getString(1));
                     if (fullFormat) {
                         assertEquals("Second string", sst2.getItemAt(2).getString());
+                        assertEquals("Second string", sst2.getString(2));
                     }
                 }
                 try (SharedStringsTable sst3 = new SharedStringsTable()) {
