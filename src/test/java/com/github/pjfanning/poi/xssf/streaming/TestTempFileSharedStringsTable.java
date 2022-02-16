@@ -29,12 +29,22 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testReadXML() throws Exception {
-        testReadXML(false);
+        testReadXML(false, false);
+    }
+
+    @Test
+    public void testReadXMLEncrypted() throws Exception {
+        testReadXML(true, false);
     }
 
     @Test
     public void testReadXMLFullFormat() throws Exception {
-        testReadXML(true);
+        testReadXML(false, true);
+    }
+
+    @Test
+    public void testReadXMLEncryptedFullFormat() throws Exception {
+        testReadXML(true, true);
     }
 
     @Test
@@ -145,9 +155,9 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
-    private void testReadXML(boolean fullFormat) throws Exception {
+    private void testReadXML(boolean encrypt, boolean fullFormat) throws Exception {
         try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(encrypt, fullFormat)) {
             sst.readFrom(is);
             assertEquals(60, sst.getCount());
             assertEquals(38, sst.getUniqueCount());
