@@ -170,7 +170,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
     }
 
     /**
-     * Return a string item by index
+     * Return a (rich text) string item by index
      *
      * @param idx index of item to return.
      * @return the item at the specified position in this Shared String table.
@@ -189,6 +189,22 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
             throw nsee;
         } catch (Exception e) {
             throw new POIXMLException("Failed to parse shared string", e);
+        }
+    }
+
+    /**
+     * Return a string item by index
+     *
+     * @param idx index of item to return.
+     * @return the item at the specified position in this Shared String table.
+     * @throws NoSuchElementException if no item exists for this index
+     * @throws POIXMLException if the item cannot be parsed
+     */
+    public String getString(int idx) {
+        if (fullFormat) {
+            return getItemAt(idx).getString();
+        } else {
+            return getPlainStringEntryAt(idx);
         }
     }
 
