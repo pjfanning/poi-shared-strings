@@ -1,10 +1,5 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.NoSuchElementException;
-import java.util.UUID;
-
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.util.TempFile;
@@ -13,10 +8,18 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.NoSuchElementException;
+import java.util.UUID;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class TestTempFileSharedStringsTable {
+public class TestMapBackedSharedStringsTable {
     @Test
     public void testWriteOut() throws Exception {
         testWriteOut(false);
@@ -29,22 +32,12 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testReadXML() throws Exception {
-        testReadXML(false, false);
-    }
-
-    @Test
-    public void testReadXMLEncrypted() throws Exception {
-        testReadXML(true, false);
+        testReadXML(false);
     }
 
     @Test
     public void testReadXMLFullFormat() throws Exception {
-        testReadXML(false, true);
-    }
-
-    @Test
-    public void testReadXMLEncryptedFullFormat() throws Exception {
-        testReadXML(true, true);
+        testReadXML(true);
     }
 
     @Test
@@ -69,28 +62,28 @@ public class TestTempFileSharedStringsTable {
 
     @Test(expected = NoSuchElementException.class)
     public void testReadMissingEntry() throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable()) {
             RichTextString rts = sst.getItemAt(0);
         }
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testGetStringMissingEntry() throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true)) {
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable()) {
             String str = sst.getString(0);
         }
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testReadMissingEntryFullFormat() throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)) {
             RichTextString rts = sst.getItemAt(0);
         }
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testGetStringMissingEntryFullFormat() throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)) {
             String str = sst.getString(0);
         }
     }
@@ -110,7 +103,7 @@ public class TestTempFileSharedStringsTable {
         byte[] bytes = new byte[1028];
         try (
                 UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
-                TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)
+                MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)
         ) {
             for (int i = 0; i < size; i++) {
                 rnd.nextBytes(bytes);
@@ -120,7 +113,7 @@ public class TestTempFileSharedStringsTable {
             sst.writeTo(bos);
             String out = bos.toString(StandardCharsets.UTF_8);
             assertFalse("sst output should not contain xml-fragment", out.contains("xml-fragment"));
-            try(TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true, fullFormat)) {
+            try(MapBackedSharedStringsTable sst2 = new MapBackedSharedStringsTable(fullFormat)) {
                 sst2.readFrom(bos.toInputStream());
                 assertEquals(size, sst2.getCount());
             }
@@ -128,8 +121,8 @@ public class TestTempFileSharedStringsTable {
     }
 
     private void testReadOOXMLStrict(boolean fullFormat) throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
+             MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.readFrom(is);
             assertEquals(15, sst.getUniqueCount());
             assertEquals(19, sst.getCount());
@@ -145,8 +138,8 @@ public class TestTempFileSharedStringsTable {
     }
 
     private void testReadStyledXML(boolean fullFormat) throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
+             MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.readFrom(is);
             assertEquals(1, sst.getCount());
             assertEquals(1, sst.getUniqueCount());
@@ -155,9 +148,9 @@ public class TestTempFileSharedStringsTable {
         }
     }
 
-    private void testReadXML(boolean encrypt, boolean fullFormat) throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
-             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(encrypt, fullFormat)) {
+    private void testReadXML(boolean fullFormat) throws Exception {
+        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
+             MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.readFrom(is);
             assertEquals(60, sst.getCount());
             assertEquals(38, sst.getUniqueCount());
@@ -167,7 +160,7 @@ public class TestTempFileSharedStringsTable {
     }
 
     private void testWriteOut(boolean fullFormat) throws Exception {
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.addSharedStringItem(new XSSFRichTextString("First string"));
             sst.addSharedStringItem(new XSSFRichTextString("First string"));
             sst.addSharedStringItem(new XSSFRichTextString("First string"));
@@ -185,7 +178,7 @@ public class TestTempFileSharedStringsTable {
             assertEquals(7, sst.getCount());
             try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
                 sst.writeTo(bos);
-                try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+                try (MapBackedSharedStringsTable sst2 = new MapBackedSharedStringsTable(true)) {
                     sst2.readFrom(bos.toInputStream());
                     assertEquals(expectedUniqueCount, sst2.getUniqueCount());
                     assertEquals(7, sst2.getCount());
@@ -216,14 +209,14 @@ public class TestTempFileSharedStringsTable {
     public void stressTest() throws Exception {
         final int limit = 100;
         File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)) {
             for (int i = 0; i < limit; i++) {
                 sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
             }
             try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                 sst.writeTo(fos);
             }
-            try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+            try (MapBackedSharedStringsTable sst2 = new MapBackedSharedStringsTable(true)) {
                 try (FileInputStream fis = new FileInputStream(tempFile)){
                     sst2.readFrom(fis);
                 }
