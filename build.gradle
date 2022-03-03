@@ -22,7 +22,6 @@ description = 'Memory efficient Shared String Table and Comments Table for POI'
 
 repositories {
     mavenCentral()
-    maven { url 'https://repository.apache.org/content/repositories/staging/' }
 }
 
 dependencies {
