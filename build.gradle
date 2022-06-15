@@ -29,7 +29,7 @@ dependencies {
     implementation 'com.h2database:h2:2.1.214'
     implementation 'org.apache.poi:poi-ooxml:5.2.2'
     implementation 'org.apache.poi:poi:5.2.2'
-    implementation 'org.apache.xmlbeans:xmlbeans:5.0.3'
+    implementation 'org.apache.xmlbeans:xmlbeans:5.1.0'
     implementation 'org.apache.commons:commons-text:1.9'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
