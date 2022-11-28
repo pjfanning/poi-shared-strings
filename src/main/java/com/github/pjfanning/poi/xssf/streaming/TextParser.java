@@ -30,7 +30,7 @@ class TextParser {
         // Precondition: pointing to <si> or <text>;  Post condition: pointing to </si> or </text>
         StringBuilder buf = new StringBuilder();
         XMLEvent xmlEvent;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+        while((xmlEvent = xmlEventReader.nextEvent()).isStartElement()) {
             switch(xmlEvent.asStartElement().getName().getLocalPart()) {
                 case "t": // Text
                     buf.append(xmlEventReader.getElementText());
@@ -57,7 +57,7 @@ class TextParser {
     static void parseCT_RElt(XMLEventReader xmlEventReader, StringBuilder buf) throws XMLStreamException {
         // Precondition: pointing to <r>;  Post condition: pointing to </r>
         XMLEvent xmlEvent;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+        while((xmlEvent = xmlEventReader.nextEvent()).isStartElement()) {
             switch(xmlEvent.asStartElement().getName().getLocalPart()) {
                 case "t": // Text
                     buf.append(xmlEventReader.getElementText());

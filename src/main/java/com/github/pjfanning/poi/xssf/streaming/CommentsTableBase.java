@@ -329,7 +329,7 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
         XSSFRichTextString richTextString = null;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+        while((xmlEvent = xmlEventReader.nextEvent()).isStartElement()) {
             StartElement startElement = xmlEvent.asStartElement();
             QName startTag = startElement.getName();
             switch(startTag.getLocalPart()) {
@@ -354,7 +354,7 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
         // Precondition: pointing to <comment>;  Post condition: pointing to </comment>
         XMLEvent xmlEvent;
         String text = null;
-        while((xmlEvent = xmlEventReader.nextTag()).isStartElement()) {
+        while((xmlEvent = xmlEventReader.nextEvent()).isStartElement()) {
             StartElement startElement = xmlEvent.asStartElement();
             switch(startElement.getName().getLocalPart()) {
                 case "text":
