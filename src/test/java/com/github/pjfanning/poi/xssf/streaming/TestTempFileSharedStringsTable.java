@@ -48,6 +48,22 @@ public class TestTempFileSharedStringsTable {
     }
 
     @Test
+    public void testReadXMLWithPhoneticHints() throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings-with-phonetic-hints.xml");
+             TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, false)) {
+            sst.readFrom(is);
+            assertEquals(3, sst.getUniqueCount());
+            assertEquals(3, sst.getCount());
+            assertEquals("Country", sst.getItemAt(0).getString());
+            assertEquals("Country", sst.getString(0));
+            assertEquals("City", sst.getItemAt(1).getString());
+            assertEquals("City", sst.getString(1));
+            assertEquals("沖縄", sst.getItemAt(2).getString());
+            assertEquals("沖縄", sst.getString(2));
+        }
+    }
+
+    @Test
     public void testReadStyledXML() throws Exception {
         testReadStyledXML(false);
     }

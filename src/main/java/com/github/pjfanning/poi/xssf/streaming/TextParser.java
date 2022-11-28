@@ -118,7 +118,7 @@ class TextParser {
 
     private static void skipElement(XMLEventReader xmlEventReader) throws XMLStreamException {
         // Precondition: pointing to start element;  Post condition: pointing to end element
-        while(xmlEventReader.nextTag().isStartElement()) {
+        while(xmlEventReader.nextEvent().isStartElement()) {
             skipElement(xmlEventReader); // recursively skip over child
         }
     }
