@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.util.TempFile;
+import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
 import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
@@ -60,6 +61,32 @@ public class TestTempFileSharedStringsTable {
             assertEquals("City", sst.getString(1));
             assertEquals("沖縄", sst.getItemAt(2).getString());
             assertEquals("沖縄", sst.getString(2));
+        }
+    }
+
+    @Test
+    public void testReadXMLWithPhoneticHintsPOISST() throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings-with-phonetic-hints.xml");
+             SharedStringsTable sst = new SharedStringsTable()) {
+            sst.readFrom(is);
+            assertEquals(3, sst.getUniqueCount());
+            assertEquals(3, sst.getCount());
+            assertEquals("Country", sst.getItemAt(0).getString());
+            assertEquals("City", sst.getItemAt(1).getString());
+            assertEquals("沖縄", sst.getItemAt(2).getString());
+        }
+    }
+
+    @Test
+    public void testReadXMLWithPhoneticHintsReadOnlySST() throws Exception {
+        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader()
+                .getResourceAsStream("sharedStrings-with-phonetic-hints.xml")) {
+            ReadOnlySharedStringsTable sst = new ReadOnlySharedStringsTable(is, false);
+            assertEquals(3, sst.getUniqueCount());
+            assertEquals(3, sst.getCount());
+            assertEquals("Country", sst.getItemAt(0).getString());
+            assertEquals("City", sst.getItemAt(1).getString());
+            assertEquals("沖縄", sst.getItemAt(2).getString());
         }
     }
 
