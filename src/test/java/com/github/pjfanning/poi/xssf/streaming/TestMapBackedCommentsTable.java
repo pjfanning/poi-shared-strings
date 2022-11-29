@@ -195,6 +195,22 @@ public class TestMapBackedCommentsTable {
     }
 
     @Test
+    public void testReadXMLWithPhoneticHints() throws Exception {
+        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings-with-phonetic-hints.xml");
+             MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(false)) {
+            sst.readFrom(is);
+            assertEquals(3, sst.getUniqueCount());
+            assertEquals(3, sst.getCount());
+            assertEquals("Country", sst.getItemAt(0).getString());
+            assertEquals("Country", sst.getString(0));
+            assertEquals("City", sst.getItemAt(1).getString());
+            assertEquals("City", sst.getString(1));
+            assertEquals("沖縄", sst.getItemAt(2).getString());
+            assertEquals("沖縄", sst.getString(2));
+        }
+    }
+
+    @Test
     public void stressTest() throws Exception {
         final int limit = 100;
         File tempFile = TempFile.createTempFile("comments-stress", ".tmp");
