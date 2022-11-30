@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/pjfanning/poi-shared-strings.svg?branch=master)](https://travis-ci.org/pjfanning/poi-shared-strings)
+![Build Status](https://github.com/pjfanning/poi-shared-strings/actions/workflows/ci.yml/badge.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings)
 
 # poi-shared-strings
