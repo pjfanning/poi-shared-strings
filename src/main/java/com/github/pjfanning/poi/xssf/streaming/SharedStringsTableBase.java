@@ -108,7 +108,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
                             try {
                                 Attribute countAtt = startElement.getAttributeByName(COUNT_QNAME);
                                 if (countAtt != null) {
-                                    count = Integer.parseInt(countAtt.getValue());
+                                    count = (int) Long.parseLong(countAtt.getValue());
                                 }
                             } catch (Exception e) {
                                 getLogger().warn("Failed to parse SharedStringsTable count");
@@ -116,7 +116,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
                             try {
                                 Attribute uniqueCountAtt = startElement.getAttributeByName(UNIQUE_COUNT_QNAME);
                                 if (uniqueCountAtt != null) {
-                                    uniqueCount = Integer.parseInt(uniqueCountAtt.getValue());
+                                    uniqueCount = (int) Long.parseLong(uniqueCountAtt.getValue());
                                 }
                             } catch (Exception e) {
                                 getLogger().warn("Failed to parse SharedStringsTable uniqueCount");
