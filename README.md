@@ -38,7 +38,7 @@ Full Format support may not work when the files are in Strict OOXML format ([POI
 
 The current implementation of Full Format can be a lot slower than the plain text solution due to the extra XML parsing overhead.
 
-# Map-Backed implementations
+## Map-Backed implementations
 
 Since v2.5.0, you can now avoid using temp files by using Map-backed implementations.
 * MapBackedSharedStringsTable
