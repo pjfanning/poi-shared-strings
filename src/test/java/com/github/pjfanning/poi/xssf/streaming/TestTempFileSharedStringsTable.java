@@ -2,10 +2,14 @@ package com.github.pjfanning.poi.xssf.streaming;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.output.UnsynchronizedByteArrayOutputStream;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.util.TempFile;
 import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
@@ -135,6 +139,30 @@ public class TestTempFileSharedStringsTable {
     public void testGetStringMissingEntryFullFormat() throws Exception {
         try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
             String str = sst.getString(0);
+        }
+    }
+
+    @Test
+    public void testParseMalformedCountFile() throws Exception {
+        try (
+                InputStream is = TestTempFileSharedStringsTable.class.getClassLoader()
+                        .getResourceAsStream("MalformedSSTCount.xlsx");
+                OPCPackage pkg = OPCPackage.open(is);
+                TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, false)
+        ) {
+            List<PackagePart> parts = pkg.getPartsByName(Pattern.compile("/xl/sharedStrings.xml"));
+            assertEquals(1, parts.size());
+
+            SharedStringsTable stbl = new SharedStringsTable(parts.get(0));
+            try (InputStream ssStream = parts.get(0).getInputStream()) {
+                sst.readFrom(ssStream);
+            }
+            assertEquals(8, sst.getCount());
+            assertEquals(stbl.getUniqueCount(), sst.getUniqueCount());
+            for (int i = 0; i < stbl.getUniqueCount(); i++) {
+                RichTextString i1 = stbl.getItemAt(i);
+                assertEquals(i1.getString(), sst.getItemAt(i).getString());
+            }
         }
     }
 
