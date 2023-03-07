@@ -5,6 +5,15 @@ import org.apache.poi.ooxml.POIXMLRelation;
 import org.apache.poi.xssf.usermodel.XSSFFactory;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 
+/**
+ * Can be used with {@link org.apache.poi.xssf.usermodel.XSSFWorkbook} or {@link org.apache.poi.xssf.streaming.SXSSFWorkbook}
+ * constructors to override the implementation of {@link org.apache.poi.xssf.model.CommentsTable} and/or
+ * {@link org.apache.poi.xssf.model.SharedStringsTable}. This factory only supports {@link TempFileCommentsTable}
+ * and {@link TempFileSharedStringsTable}.
+ *
+ * @see CustomXSSFFactory an alternative factory class that allows you more control of the injected <code>CommentsTable</code>
+ * and <code>SharedStringsTable</code> implementations.
+ */
 public class SXSSFFactory extends XSSFFactory {
 
     private boolean encryptTempFiles = false;
@@ -58,16 +67,16 @@ public class SXSSFFactory extends XSSFFactory {
             try {
                 return new TempFileSharedStringsTable(encryptTempFiles);
             } catch (Exception e) {
-                throw new RuntimeException("Exception creating TempFileSharedStringsTable; com.h2database h2 jar is " +
-                        "required for this feature and is not included as a core dependency of poi-ooxml");
+                throw new IllegalStateException("Exception creating TempFileSharedStringsTable; com.h2database h2 jar is " +
+                        "required for this feature and is not included as a core dependency of poi-shared-strings");
             }
         }
         if (XSSFRelation.SHEET_COMMENTS.getRelation().equals(descriptor.getRelation()) && enableTempFileComments) {
             try {
                 return new TempFileCommentsTable(encryptTempFiles);
             } catch (Exception e) {
-                throw new RuntimeException("Exception creating TempFileCommentsTable; com.h2database h2 jar is " +
-                        "required for this feature and is not included as a core dependency of poi-ooxml");
+                throw new IllegalStateException("Exception creating TempFileCommentsTable; com.h2database h2 jar is " +
+                        "required for this feature and is not included as a core dependency of poi-shared-strings");
             }
         }
         return super.newDocumentPart(descriptor);

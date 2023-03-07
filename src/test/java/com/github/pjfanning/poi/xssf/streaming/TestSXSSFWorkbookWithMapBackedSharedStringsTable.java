@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
@@ -12,19 +13,22 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class TestSXSSFWorkbookWithTempFileSharedStringsTable {
+public class TestSXSSFWorkbookWithMapBackedSharedStringsTable {
 
     @Test
     public void useStreamingSharedStringsTable() throws Exception {
-        SXSSFFactory factory0 = new SXSSFFactory();
-        SXSSFFactory factory1 = new SXSSFFactory().encryptTempFiles(true);
-        for (SXSSFFactory factory : new SXSSFFactory[]{factory0, factory1}) {
+        XSSFFactory factory0 = CustomXSSFFactory.builder()
+                .commentsTable(new MapBackedCommentsTable(false))
+                .build();
+        XSSFFactory factory1 = CustomXSSFFactory.builder()
+                .commentsTable(new MapBackedCommentsTable(true))
+                .build();
+        for (XSSFFactory factory : new XSSFFactory[]{factory0, factory1}) {
             try (SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),
                         SXSSFWorkbook.DEFAULT_WINDOW_SIZE, true, true)) {
                 SharedStringsTable sss = POITestUtils.getFieldValue(SXSSFWorkbook.class, wb, SharedStringsTable.class, "_sharedStringSource");
 
                 assertNotNull(sss);
-                assertEquals(TempFileSharedStringsTable.class, sss.getClass());
 
                 Row row = wb.createSheet("S1").createRow(0);
 
