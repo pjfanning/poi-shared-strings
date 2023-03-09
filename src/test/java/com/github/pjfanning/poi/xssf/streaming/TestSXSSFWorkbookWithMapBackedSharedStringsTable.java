@@ -17,11 +17,15 @@ public class TestSXSSFWorkbookWithMapBackedSharedStringsTable {
 
     @Test
     public void useStreamingSharedStringsTable() throws Exception {
+        final SharedStringsTableFactory sharedStringsTableFactory0 =
+                () -> new MapBackedSharedStringsTable(false);
+        final SharedStringsTableFactory sharedStringsTableFactory1 =
+                () -> new MapBackedSharedStringsTable(true);
         XSSFFactory factory0 = CustomXSSFFactory.builder()
-                .commentsTable(new MapBackedCommentsTable(false))
+                .sharedStringsFactory(sharedStringsTableFactory0)
                 .build();
         XSSFFactory factory1 = CustomXSSFFactory.builder()
-                .commentsTable(new MapBackedCommentsTable(true))
+                .sharedStringsFactory(sharedStringsTableFactory1)
                 .build();
         for (XSSFFactory factory : new XSSFFactory[]{factory0, factory1}) {
             try (SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),

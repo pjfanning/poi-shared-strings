@@ -25,8 +25,9 @@ import static org.junit.Assert.assertNotNull;
 public class TestSXSSFWorkbookWithMapBackedCommentsTable {
     @Test
     public void testComments() throws Exception {
+        final CommentsTableFactory commentsTableFactory = () -> new MapBackedCommentsTable(false);
         XSSFFactory factory = CustomXSSFFactory.builder()
-                .commentsTable(new MapBackedCommentsTable(false))
+                .commentsTableFactory(commentsTableFactory)
                 .build();
         SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),
                 SXSSFWorkbook.DEFAULT_WINDOW_SIZE, false, false);
@@ -60,8 +61,9 @@ public class TestSXSSFWorkbookWithMapBackedCommentsTable {
 
     @Test
     public void testModifyComment() throws Exception {
+        final CommentsTableFactory commentsTableFactory = () -> new MapBackedCommentsTable(false);
         XSSFFactory factory = CustomXSSFFactory.builder()
-                .commentsTable(new MapBackedCommentsTable(false))
+                .commentsTableFactory(commentsTableFactory)
                 .build();
         SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),
                 SXSSFWorkbook.DEFAULT_WINDOW_SIZE, false, false);
@@ -99,8 +101,10 @@ public class TestSXSSFWorkbookWithMapBackedCommentsTable {
 
     @Test
     public void testMoveComment() throws Exception {
-        SXSSFFactory factory = new SXSSFFactory();
-        factory.enableTempFileComments(true);
+        final CommentsTableFactory commentsTableFactory = () -> new MapBackedCommentsTable(false);
+        XSSFFactory factory = CustomXSSFFactory.builder()
+                .commentsTableFactory(commentsTableFactory)
+                .build();
         SXSSFWorkbook wb = new SXSSFWorkbook(new XSSFWorkbook(factory),
                 SXSSFWorkbook.DEFAULT_WINDOW_SIZE, false, false);
         try {

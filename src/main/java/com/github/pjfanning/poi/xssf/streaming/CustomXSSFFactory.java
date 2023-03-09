@@ -13,9 +13,6 @@ import org.apache.poi.xssf.usermodel.XSSFRelation;
  * Can be used with {@link org.apache.poi.xssf.usermodel.XSSFWorkbook} or {@link org.apache.poi.xssf.streaming.SXSSFWorkbook}
  * constructors to override the implementation of {@link org.apache.poi.xssf.model.Comments} and/or
  * {@link org.apache.poi.xssf.model.SharedStrings}. Use {@link #builder()} to build your factory instance.
- * You should create a new instance of the factory for each <code>Workbook</code> that you work with. This is because
- * the {@link org.apache.poi.xssf.model.CommentsTable} and {@link org.apache.poi.xssf.model.SharedStringsTable}
- * are not reusable.
  *
  * @see SXSSFFactory an alternative factory class that is easier to use but limited in the type of table implememtations it supports
  * @see TempFileSharedStringsTable
@@ -28,40 +25,29 @@ import org.apache.poi.xssf.usermodel.XSSFRelation;
 public class CustomXSSFFactory extends XSSFFactory {
 
     public static class Builder {
-        private Comments commentsTable;
-        private SharedStrings sharedStrings;
+        private CommentsTableFactory commentsTableFactory;
+        private SharedStringsTableFactory sharedStringsFactory;
 
         /**
-         * @param commentsTable a comment table instance
+         * @param commentsTableFactory a comment table instance
          * @return this Builder instance
-         * @throws ConfigException if the <code>Comments</code> instance is not a subclass of {@link POIXMLDocumentPart}
          */
-        public Builder commentsTable(Comments commentsTable) throws ConfigException {
-            if (commentsTable instanceof POIXMLDocumentPart) {
-                this.commentsTable = commentsTable;
-            } else {
-                throw new ConfigException("Comments instance must be a subclass of POIXMLDocumentPart");
-            }
+        public Builder commentsTableFactory(CommentsTableFactory commentsTableFactory) {
+            this.commentsTableFactory = commentsTableFactory;
             return this;
         }
 
         /**
-         * @param sharedStrings a sharedStrings table instance
+         * @param sharedStringsFactory a sharedStringsFactory table instance
          * @return this Builder instance
-         * @throws ConfigException if the <code>SharedStrings</code> instance is not a subclass of {@link POIXMLDocumentPart}
          */
-        public Builder sharedStrings(SharedStrings sharedStrings) throws ConfigException {
-            if (sharedStrings instanceof POIXMLDocumentPart) {
-                this.sharedStrings = sharedStrings;
-            } else {
-                throw new ConfigException("SharedStrings instance must be a subclass of POIXMLDocumentPart");
-            }
-            this.sharedStrings = sharedStrings;
+        public Builder sharedStringsFactory(SharedStringsTableFactory sharedStringsFactory) {
+            this.sharedStringsFactory = sharedStringsFactory;
             return this;
         }
 
         public CustomXSSFFactory build() {
-            return new CustomXSSFFactory(commentsTable, sharedStrings);
+            return new CustomXSSFFactory(commentsTableFactory, sharedStringsFactory);
         }
     }
 
@@ -69,24 +55,41 @@ public class CustomXSSFFactory extends XSSFFactory {
         return new Builder();
     }
 
-    private final Comments commentsTable;
-    private final SharedStrings sharedStrings;
+    private final CommentsTableFactory commentsTableFactory;
+    private final SharedStringsTableFactory sharedStringsFactory;
 
 
-    private CustomXSSFFactory(Comments commentsTable, SharedStrings sharedStrings) {
-        this.commentsTable = commentsTable;
-        this.sharedStrings = sharedStrings;
+    private CustomXSSFFactory(CommentsTableFactory commentsTableFactory, SharedStringsTableFactory sharedStringsFactory) {
+        this.commentsTableFactory = commentsTableFactory;
+        this.sharedStringsFactory = sharedStringsFactory;
     }
 
+    /**
+     * @param descriptor  describes the object to create
+     * @return a {@link POIXMLDocumentPart} that is created using the build factories (if set)
+     * @throws FactoryMismatchException if the created instances do not implement {@link POIXMLDocumentPart}
+     */
     @Override
     public POIXMLDocumentPart newDocumentPart(POIXMLRelation descriptor) {
-        if (XSSFRelation.SHARED_STRINGS.getRelation().equals(descriptor.getRelation()) &&
-                sharedStrings instanceof POIXMLDocumentPart) {
-            return (POIXMLDocumentPart) sharedStrings;
+        if (XSSFRelation.SHARED_STRINGS.getRelation().equals(descriptor.getRelation())
+                && sharedStringsFactory != null) {
+            final SharedStrings sharedStrings = sharedStringsFactory.createSharedStringsTable();
+            if (sharedStrings instanceof POIXMLDocumentPart) {
+                return (POIXMLDocumentPart) sharedStrings;
+            } else if (sharedStrings != null) {
+                throw new FactoryMismatchException("Shared Strings Table must implement POIXMLDocumentPart");
+            }
+            return null;
         }
-        if (XSSFRelation.SHEET_COMMENTS.getRelation().equals(descriptor.getRelation()) &&
-                commentsTable instanceof POIXMLDocumentPart) {
-            return (POIXMLDocumentPart) commentsTable;
+        if (XSSFRelation.SHEET_COMMENTS.getRelation().equals(descriptor.getRelation())
+                && commentsTableFactory != null) {
+            Comments commentsTable = commentsTableFactory.createCommentsTable();
+            if (commentsTable instanceof POIXMLDocumentPart) {
+                return (POIXMLDocumentPart) commentsTable;
+            } else if (commentsTable != null) {
+                throw new FactoryMismatchException("Comments Table must implement POIXMLDocumentPart");
+            }
+            return null;
         }
         return super.newDocumentPart(descriptor);
     }
