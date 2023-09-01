@@ -26,7 +26,7 @@ repositories {
 
 dependencies {
     implementation 'org.slf4j:slf4j-api:1.7.36'
-    implementation 'com.h2database:h2:2.2.220'
+    implementation 'com.h2database:h2:2.2.222'
     implementation 'org.apache.poi:poi-ooxml:5.2.3'
     implementation 'org.apache.poi:poi:5.2.3'
     implementation 'org.apache.xmlbeans:xmlbeans:5.1.1'
