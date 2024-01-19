@@ -178,7 +178,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
      * @throws POIXMLException if the item cannot be parsed
      */
     @Override
-    public RichTextString getItemAt(int idx) {
+    public RichTextString getItemAt(int idx) throws POIXMLException {
         try {
             if (fullFormat) {
                 return new XSSFRichTextString(getRSTEntryAt(idx));
@@ -200,7 +200,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
      * @throws NoSuchElementException if no item exists for this index
      * @throws POIXMLException if the item cannot be parsed
      */
-    public String getString(int idx) {
+    public String getString(int idx) throws POIXMLException {
         if (fullFormat) {
             return getItemAt(idx).getString();
         } else {
