@@ -27,10 +27,11 @@ repositories {
 
 ext {
     poiVersion = '5.2.5'
+    slf4jVersion = '2.0.11'
 }
 
 dependencies {
-    implementation 'org.slf4j:slf4j-api:2.0.11'
+    implementation "org.slf4j:slf4j-api:$slf4jVersion"
     implementation 'com.h2database:h2:2.2.224'
     implementation "org.apache.poi:poi-ooxml:$poiVersion"
     implementation "org.apache.poi:poi:$poiVersion"
@@ -39,7 +40,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'commons-io:commons-io:2.15.1'
-    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.11'
+    testRuntimeOnly "org.slf4j:slf4j-simple:$slf4jVersion"
     testRuntimeOnly 'org.apache.logging.log4j:log4j-to-slf4j:2.22.1'
 }
 
