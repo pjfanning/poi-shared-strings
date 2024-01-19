@@ -34,10 +34,19 @@ public class TempFileCommentsTable extends CommentsTableBase {
         this(false, false);
     }
 
+    /**
+     * @param encryptTempFiles whether to encrypt the temp files
+     * @throws IOException if an error occurs while working with the temp file
+     */
     public TempFileCommentsTable(boolean encryptTempFiles) throws IOException {
         this(encryptTempFiles, false);
     }
 
+    /**
+     * @param encryptTempFiles whether to encrypt the temp files
+     * @param fullFormat whether to store format information (which is more expensive)
+     * @throws IOException if an error occurs while working with the temp file
+     */
     public TempFileCommentsTable(boolean encryptTempFiles, boolean fullFormat) throws IOException {
         super(fullFormat);
         try {
@@ -69,10 +78,21 @@ public class TempFileCommentsTable extends CommentsTableBase {
         }
     }
 
+    /**
+     * @param pkg the OPCPackage to load the comments from
+     * @param encryptTempFiles whether to encrypt the temp files
+     * @throws IOException if an error occurs while working with the temp file
+     */
     public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles) throws IOException {
         this(pkg, encryptTempFiles, false);
     }
 
+    /**
+     * @param pkg the OPCPackage to load the comments from
+     * @param encryptTempFiles whether to encrypt the temp files
+     * @param fullFormat whether to store format information (which is more expensive)
+     * @throws IOException if an error occurs while working with the temp file
+     */
     public TempFileCommentsTable(OPCPackage pkg, boolean encryptTempFiles,
                                  boolean fullFormat) throws IOException {
         this(encryptTempFiles, fullFormat);

@@ -112,7 +112,7 @@ public class TempFileSharedStringsTable extends SharedStringsTableBase {
      * Use <code>getItemAt</code> instead.
      *
      * @return throws UnsupportedOperationException
-     * @throws UnsupportedOperationException
+     * @throws UnsupportedOperationException not supported
      */
     @Override
     public List<RichTextString> getSharedStringItems() {

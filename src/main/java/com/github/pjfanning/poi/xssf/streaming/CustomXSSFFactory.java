@@ -1,6 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import org.apache.poi.ooxml.POIXMLDocumentPart;
+import org.apache.poi.ooxml.POIXMLException;
 import org.apache.poi.ooxml.POIXMLRelation;
 import org.apache.poi.xssf.model.Comments;
 import org.apache.poi.xssf.model.CommentsTable;
@@ -66,11 +67,13 @@ public class CustomXSSFFactory extends XSSFFactory {
 
     /**
      * @param descriptor  describes the object to create
-     * @return a {@link POIXMLDocumentPart} that is created using the build factories (if set)
+     * @return a {@link POIXMLDocumentPart} that is created using the build factories (if set) - can return <code>null</code>
      * @throws FactoryMismatchException if the created instances do not implement {@link POIXMLDocumentPart}
+     * @throws POIXMLException          can be thrown by underlying POI code
      */
     @Override
-    public POIXMLDocumentPart newDocumentPart(POIXMLRelation descriptor) {
+    public POIXMLDocumentPart newDocumentPart(POIXMLRelation descriptor)
+            throws FactoryMismatchException, POIXMLException {
         if (XSSFRelation.SHARED_STRINGS.getRelation().equals(descriptor.getRelation())
                 && sharedStringsFactory != null) {
             final SharedStrings sharedStrings = sharedStringsFactory.createSharedStringsTable();

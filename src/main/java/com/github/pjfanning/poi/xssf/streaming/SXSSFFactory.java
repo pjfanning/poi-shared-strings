@@ -23,7 +23,7 @@ public class SXSSFFactory extends XSSFFactory {
     public SXSSFFactory() {}
 
     /**
-     * @param encryptTempFiles
+     * @param encryptTempFiles whether to encrypt the temp files
      * @deprecated use #encryptTempFiles method instead
      */
     @Deprecated

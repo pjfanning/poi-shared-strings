@@ -25,16 +25,28 @@ public class MapBackedCommentsTable extends CommentsTableBase {
         this(false);
     }
 
+    /**
+     * @param fullFormat whether to use the full format for the comment text
+     */
     public MapBackedCommentsTable(boolean fullFormat) {
         super(fullFormat);
         comments = new ConcurrentHashMap<>();
         authors = new ConcurrentHashMap<>();
     }
 
+    /**
+     * @param pkg the package to load
+     * @throws IOException if an error occurs while reading the package
+     */
     public MapBackedCommentsTable(OPCPackage pkg) throws IOException {
         this(pkg, false);
     }
 
+    /**
+     * @param pkg the package to load
+     * @param fullFormat whether to use the full format for the comment text
+     * @throws IOException if an error occurs while reading the package
+     */
     public MapBackedCommentsTable(OPCPackage pkg, boolean fullFormat) throws IOException {
         this(fullFormat);
         ArrayList<PackagePart> parts = pkg.getPartsByContentType(XSSFRelation.SHEET_COMMENTS.getContentType());
