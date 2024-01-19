@@ -36,6 +36,10 @@ class SerializableComment implements Serializable {
         this.author = author;
     }
 
+    /**
+     * @return zero-based column index of the cell that contains the comment
+     * @throws IllegalStateException if the cell address is not initialised
+     */
     public int getColumn() {
         CellAddress address = getAddress();
         if (address == null) {
@@ -44,6 +48,10 @@ class SerializableComment implements Serializable {
         return address.getColumn();
     }
 
+    /**
+     * @return zero-based row index of the cell that contains the comment
+     * @throws IllegalStateException if the cell address is not initialised
+     */
     public int getRow() {
         CellAddress address = getAddress();
         if (address == null) {
@@ -68,10 +76,20 @@ class SerializableComment implements Serializable {
         return cellAddress;
     }
 
+    /**
+     * Sets the row and column of the cell that contains the comment
+     * @param row row index (zero based)
+     * @param col column index (zero based)
+     */
     public void setAddress(int row, int col) {
         setAddress(new CellAddress(row, col));
     }
 
+    /**
+     * Sets the column index (zero based) of the cell that contains the comment
+     * @param col column index (zero based)
+     * @throws IllegalStateException if the cell address is not initialised
+     */
     public void setColumn(int col) {
         CellAddress address = getAddress();
         if (address == null) {
@@ -80,6 +98,11 @@ class SerializableComment implements Serializable {
         setAddress(address.getRow(), col);
     }
 
+    /**
+     * Sets the row index (zero based) of the cell that contains the comment
+     * @param row row index (zero based)
+     * @throws IllegalStateException if the cell address is not initialised
+     */
     public void setRow(int row) {
         CellAddress address = getAddress();
         if (address == null) {
@@ -92,11 +115,15 @@ class SerializableComment implements Serializable {
      * @return comment as a rich string
      * @throws POIXMLException if the value is not parseable
      */
-    public XSSFRichTextString getString() {
+    public XSSFRichTextString getString() throws POIXMLException {
         return new XSSFRichTextString(getCTRst());
     }
 
-    public String getCommentText() {
+    /**
+     * @return comment as a simple string, i.e. without any formatting
+     * @throws POIXMLException if the value is not parseable
+     */
+    public String getCommentText() throws POIXMLException {
         if (fullFormat) {
             return getString().getString();
         } else {
@@ -104,6 +131,11 @@ class SerializableComment implements Serializable {
         }
     }
 
+    /**
+     * Sets the comment text string
+     * @param string - XSSFRichTextString comment text string
+     * @throws IllegalArgumentException if the argument is not an instance of XSSFRichTextString
+     */
     public void setString(RichTextString string) {
         if(!(string instanceof XSSFRichTextString)){
             throw new IllegalArgumentException("Only XSSFRichTextString argument is supported");
