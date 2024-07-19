@@ -7,17 +7,23 @@ import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import static com.github.pjfanning.poi.xssf.streaming.TestTempFileSharedStringsTable.MINIMAL_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 public class TestMapBackedSharedStringsTable {
     @Test
@@ -96,6 +102,71 @@ public class TestMapBackedSharedStringsTable {
     @Test
     public void testWriteFullFormat() throws Exception {
         testWrite(10, true);
+    }
+
+    @Test
+    public void testMinimalTable() throws IOException {
+        try (MapBackedSharedStringsTable tbl = new MapBackedSharedStringsTable()) {
+            tbl.readFrom(new ByteArrayInputStream(MINIMAL_XML.getBytes(StandardCharsets.UTF_8)));
+            assertEquals(49, tbl.getUniqueCount());
+            assertEquals(55, tbl.getCount());
+            assertEquals("bla", tbl.getItemAt(0).getString());
+            assertThrows(NoSuchElementException.class,
+                    () -> tbl.getItemAt(1).getString());
+        }
+    }
+
+    @Test
+    public void testBigUniqueCount() throws IOException, SAXException {
+        try (MapBackedSharedStringsTable tbl = new MapBackedSharedStringsTable()) {
+            tbl.readFrom(new ByteArrayInputStream(
+                    MINIMAL_XML.replace("49", Integer.toString(Integer.MAX_VALUE))
+                            .getBytes(StandardCharsets.UTF_8)));
+            assertNotNull(tbl);
+            assertEquals(Integer.MAX_VALUE, tbl.getUniqueCount());
+            assertEquals(55, tbl.getCount());
+            assertEquals("bla", tbl.getItemAt(0).getString());
+            assertThrows(NoSuchElementException.class,
+                    () -> tbl.getItemAt(1).getString());
+        }
+    }
+
+    @Test
+    public void testHugeUniqueCount() throws IOException, SAXException {
+        try (MapBackedSharedStringsTable tbl = new MapBackedSharedStringsTable()) {
+            tbl.readFrom(new ByteArrayInputStream(
+                    MINIMAL_XML.replace("49", "99999999999999999")
+                            .getBytes(StandardCharsets.UTF_8)));
+            assertNotNull(tbl);
+            assertEquals(1, tbl.getUniqueCount());
+            assertEquals(55, tbl.getCount());
+            assertEquals("bla", tbl.getItemAt(0).getString());
+            assertThrows(NoSuchElementException.class,
+                    () -> tbl.getItemAt(1).getString());
+        }
+    }
+
+    @Test
+    public void stressTest() throws Exception {
+        final int limit = 100;
+        File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)) {
+            for (int i = 0; i < limit; i++) {
+                sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
+            }
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                sst.writeTo(fos);
+            }
+            try (MapBackedSharedStringsTable sst2 = new MapBackedSharedStringsTable(true)) {
+                try (FileInputStream fis = new FileInputStream(tempFile)){
+                    sst2.readFrom(fis);
+                }
+                assertEquals(limit, sst2.getUniqueCount());
+                assertEquals(limit, sst2.getCount());
+            }
+        } finally {
+            tempFile.delete();
+        }
     }
 
     private void testWrite(int size, boolean fullFormat) throws Exception {
@@ -202,29 +273,6 @@ public class TestMapBackedSharedStringsTable {
                     }
                 }
             }
-        }
-    }
-
-    @Test
-    public void stressTest() throws Exception {
-        final int limit = 100;
-        File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
-        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)) {
-            for (int i = 0; i < limit; i++) {
-                sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
-            }
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                sst.writeTo(fos);
-            }
-            try (MapBackedSharedStringsTable sst2 = new MapBackedSharedStringsTable(true)) {
-                try (FileInputStream fis = new FileInputStream(tempFile)){
-                    sst2.readFrom(fis);
-                }
-                assertEquals(limit, sst2.getUniqueCount());
-                assertEquals(limit, sst2.getCount());
-            }
-        } finally {
-            tempFile.delete();
         }
     }
 }

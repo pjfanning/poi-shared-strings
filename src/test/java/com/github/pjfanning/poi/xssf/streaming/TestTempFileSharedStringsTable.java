@@ -17,9 +17,12 @@ import org.apache.poi.xssf.model.SharedStringsTable;
 import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 public class TestTempFileSharedStringsTable {
     @Test
@@ -176,6 +179,79 @@ public class TestTempFileSharedStringsTable {
         testWrite(10, true);
     }
 
+    static final String MINIMAL_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" +
+            "<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"55\" uniqueCount=\"49\">" +
+            "<si>" +
+            "<t>bla</t>" +
+            "<phoneticPr fontId=\"1\"/>" +
+            "</si>" +
+            "</sst>";
+
+    @Test
+    public void testMinimalTable() throws IOException {
+        try (TempFileSharedStringsTable tbl = new TempFileSharedStringsTable()) {
+            tbl.readFrom(new ByteArrayInputStream(MINIMAL_XML.getBytes(StandardCharsets.UTF_8)));
+            assertEquals(49, tbl.getUniqueCount());
+            assertEquals(55, tbl.getCount());
+            assertEquals("bla", tbl.getItemAt(0).getString());
+            assertThrows(NoSuchElementException.class,
+                    () -> tbl.getItemAt(1).getString());
+        }
+    }
+
+    @Test
+    public void testBigUniqueCount() throws IOException, SAXException {
+        try (TempFileSharedStringsTable tbl = new TempFileSharedStringsTable()) {
+            tbl.readFrom(new ByteArrayInputStream(
+                    MINIMAL_XML.replace("49", Integer.toString(Integer.MAX_VALUE))
+                            .getBytes(StandardCharsets.UTF_8)));
+            assertNotNull(tbl);
+            assertEquals(Integer.MAX_VALUE, tbl.getUniqueCount());
+            assertEquals(55, tbl.getCount());
+            assertEquals("bla", tbl.getItemAt(0).getString());
+            assertThrows(NoSuchElementException.class,
+                    () -> tbl.getItemAt(1).getString());
+        }
+    }
+
+    @Test
+    public void testHugeUniqueCount() throws IOException, SAXException {
+        try (TempFileSharedStringsTable tbl = new TempFileSharedStringsTable()) {
+            tbl.readFrom(new ByteArrayInputStream(
+                    MINIMAL_XML.replace("49", "99999999999999999")
+                            .getBytes(StandardCharsets.UTF_8)));
+            assertNotNull(tbl);
+            assertEquals(1, tbl.getUniqueCount());
+            assertEquals(55, tbl.getCount());
+            assertEquals("bla", tbl.getItemAt(0).getString());
+            assertThrows(NoSuchElementException.class,
+                    () -> tbl.getItemAt(1).getString());
+        }
+    }
+
+    @Test
+    public void stressTest() throws Exception {
+        final int limit = 100;
+        File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
+        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
+            for (int i = 0; i < limit; i++) {
+                sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
+            }
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                sst.writeTo(fos);
+            }
+            try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
+                try (FileInputStream fis = new FileInputStream(tempFile)){
+                    sst2.readFrom(fis);
+                }
+                assertEquals(limit, sst2.getUniqueCount());
+                assertEquals(limit, sst2.getCount());
+            }
+        } finally {
+            tempFile.delete();
+        }
+    }
+
     private void testWrite(int size, boolean fullFormat) throws Exception {
         java.util.Random rnd = new java.util.Random();
         byte[] bytes = new byte[1028];
@@ -280,29 +356,6 @@ public class TestTempFileSharedStringsTable {
                     }
                 }
             }
-        }
-    }
-
-    @Test
-    public void stressTest() throws Exception {
-        final int limit = 100;
-        File tempFile = TempFile.createTempFile("shared-string-stress", ".tmp");
-        try (TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, true)) {
-            for (int i = 0; i < limit; i++) {
-                sst.addSharedStringItem(new XSSFRichTextString(UUID.randomUUID().toString()));
-            }
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                sst.writeTo(fos);
-            }
-            try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
-                try (FileInputStream fis = new FileInputStream(tempFile)){
-                    sst2.readFrom(fis);
-                }
-                assertEquals(limit, sst2.getUniqueCount());
-                assertEquals(limit, sst2.getCount());
-            }
-        } finally {
-            tempFile.delete();
         }
     }
 }
