@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'com.github.pjfanning'
-version = '2.9.2'
+version = '2.9.3-SNAPSHOT'
 
 sonarqube {
   properties {
