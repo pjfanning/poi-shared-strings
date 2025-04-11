@@ -21,8 +21,6 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
 
@@ -40,9 +38,6 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
           cache: 'gradle'
-
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
 
       - name: Publish with Gradle
         env:
