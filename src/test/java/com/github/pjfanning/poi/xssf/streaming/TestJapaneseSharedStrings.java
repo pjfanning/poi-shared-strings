@@ -35,4 +35,26 @@ public class TestJapaneseSharedStrings {
             assertEquals("売上", sst.getItemAt(0).getString());
         }
     }
+
+    @Test
+    public void testMapBackedSharedStringsTable() throws Exception {
+        try (
+                InputStream stream = TestIOUtils.getResourceStream("jaSharedStrings.xml");
+                MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable()
+        ) {
+            sst.readFrom(stream);
+            assertEquals("売上", sst.getItemAt(0).getString());
+        }
+    }
+
+    @Test
+    public void testMapBackedSharedStringsTableFullFormat() throws Exception {
+        try (
+                InputStream stream = TestIOUtils.getResourceStream("jaSharedStrings.xml");
+                MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)
+        ) {
+            sst.readFrom(stream);
+            assertEquals("売上", sst.getItemAt(0).getString());
+        }
+    }
 }
