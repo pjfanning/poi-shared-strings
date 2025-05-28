@@ -26,7 +26,7 @@ public class TestStreamingRead {
 
     @Test
     public void testXSSFSheetXMLHandler() throws Exception {
-        try (InputStream is = getResourceStream("sample.xlsx");
+        try (InputStream is = TestIOUtils.getResourceStream("sample.xlsx");
              OPCPackage pkg = PackageHelper.open(is);
              TempFileSharedStringsTable strings = new TempFileSharedStringsTable(pkg, true)) {
             XSSFReader xssfReader = new XSSFReader(pkg);
@@ -62,10 +62,6 @@ public class TestStreamingRead {
         } catch(ParserConfigurationException e) {
             throw new RuntimeException("SAX parser appears to be broken - " + e.getMessage());
         }
-    }
-
-    private InputStream getResourceStream(String filename) {
-        return TestStreamingRead.class.getClassLoader().getResourceAsStream(filename);
     }
 
     private String getExpected() {

@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static org.junit.Assert.*;
 
 public class TestTempFileCommentsTable {
@@ -46,7 +47,7 @@ public class TestTempFileCommentsTable {
     @Test
     public void testWriteEmpty() throws Exception {
         try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
+                UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get();
                 TempFileCommentsTable commentsTable = new TempFileCommentsTable(true)
         ) {
             commentsTable.writeTo(bos);
@@ -75,7 +76,7 @@ public class TestTempFileCommentsTable {
     @Test
     public void testReadStrictXML() throws Exception {
         try (
-                InputStream is = TestTempFileCommentsTable.class.getClassLoader().getResourceAsStream("strict-comments1.xml");
+                InputStream is = getResourceStream("strict-comments1.xml");
                 TempFileCommentsTable ct = new TempFileCommentsTable(false, false)
         ) {
             ct.readFrom(is);
@@ -245,7 +246,7 @@ public class TestTempFileCommentsTable {
 
     private void testReadXML(boolean encrypt, boolean fullFormat) throws Exception {
         try (
-                InputStream is = TestTempFileCommentsTable.class.getClassLoader().getResourceAsStream("comments1.xml");
+                InputStream is = getResourceStream("comments1.xml");
                 TempFileCommentsTable ct = new TempFileCommentsTable(encrypt, fullFormat)
         ) {
             ct.readFrom(is);
@@ -279,8 +280,8 @@ public class TestTempFileCommentsTable {
 
     private void testWrite(boolean encrypt, boolean fullFormat) throws Exception {
         try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
-                InputStream is = TestTempFileCommentsTable.class.getClassLoader().getResourceAsStream("comments1.xml");
+                UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get();
+                InputStream is = getResourceStream("comments1.xml");
                 TempFileCommentsTable commentsTable = new TempFileCommentsTable(encrypt, fullFormat)
         ) {
             commentsTable.readFrom(is);

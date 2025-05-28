@@ -19,7 +19,7 @@ public class TestSerializable {
         comment.setAddress(new CellAddress("B20"));
         comment.setVisible(false);
         assertEquals("test string", comment.getCommentText());
-        try(UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+        try(UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
             try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                 oos.writeObject(comment);
             }
@@ -44,7 +44,7 @@ public class TestSerializable {
         comment.setAddress(new CellAddress("B20"));
         comment.setVisible(false);
         assertEquals("test string", comment.getCommentText());
-        try(UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+        try(UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
             try(ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                 oos.writeObject(comment);
             }

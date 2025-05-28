@@ -19,6 +19,7 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -57,7 +58,7 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testReadXMLWithPhoneticHints() throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings-with-phonetic-hints.xml");
+        try (InputStream is = getResourceStream("sharedStrings-with-phonetic-hints.xml");
              TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, false)) {
             sst.readFrom(is);
             assertEquals(3, sst.getUniqueCount());
@@ -73,7 +74,7 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testReadXMLWithPhoneticHintsPOISST() throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings-with-phonetic-hints.xml");
+        try (InputStream is = getResourceStream("sharedStrings-with-phonetic-hints.xml");
              SharedStringsTable sst = new SharedStringsTable()) {
             sst.readFrom(is);
             assertEquals(3, sst.getUniqueCount());
@@ -86,8 +87,7 @@ public class TestTempFileSharedStringsTable {
 
     @Test
     public void testReadXMLWithPhoneticHintsReadOnlySST() throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader()
-                .getResourceAsStream("sharedStrings-with-phonetic-hints.xml")) {
+        try (InputStream is = getResourceStream("sharedStrings-with-phonetic-hints.xml")) {
             ReadOnlySharedStringsTable sst = new ReadOnlySharedStringsTable(is, false);
             assertEquals(3, sst.getUniqueCount());
             assertEquals(3, sst.getCount());
@@ -148,8 +148,7 @@ public class TestTempFileSharedStringsTable {
     @Test
     public void testParseMalformedCountFile() throws Exception {
         try (
-                InputStream is = TestTempFileSharedStringsTable.class.getClassLoader()
-                        .getResourceAsStream("MalformedSSTCount.xlsx");
+                InputStream is = getResourceStream("MalformedSSTCount.xlsx");
                 OPCPackage pkg = OPCPackage.open(is);
                 TempFileSharedStringsTable sst = new TempFileSharedStringsTable(false, false)
         ) {
@@ -256,7 +255,7 @@ public class TestTempFileSharedStringsTable {
         java.util.Random rnd = new java.util.Random();
         byte[] bytes = new byte[1028];
         try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
+                UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get();
                 TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)
         ) {
             for (int i = 0; i < size; i++) {
@@ -275,7 +274,7 @@ public class TestTempFileSharedStringsTable {
     }
 
     private void testReadOOXMLStrict(boolean fullFormat) throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
+        try (InputStream is = getResourceStream("strictSharedStrings.xml");
              TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
             sst.readFrom(is);
             assertEquals(15, sst.getUniqueCount());
@@ -292,7 +291,7 @@ public class TestTempFileSharedStringsTable {
     }
 
     private void testReadStyledXML(boolean fullFormat) throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
+        try (InputStream is = getResourceStream("styledSharedStrings.xml");
              TempFileSharedStringsTable sst = new TempFileSharedStringsTable(true, fullFormat)) {
             sst.readFrom(is);
             assertEquals(1, sst.getCount());
@@ -303,7 +302,7 @@ public class TestTempFileSharedStringsTable {
     }
 
     private void testReadXML(boolean encrypt, boolean fullFormat) throws Exception {
-        try (InputStream is = TestTempFileSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
+        try (InputStream is = getResourceStream("sharedStrings.xml");
              TempFileSharedStringsTable sst = new TempFileSharedStringsTable(encrypt, fullFormat)) {
             sst.readFrom(is);
             assertEquals(60, sst.getCount());
@@ -330,7 +329,7 @@ public class TestTempFileSharedStringsTable {
             int expectedUniqueCount = fullFormat ? 3 : 2;
             assertEquals(expectedUniqueCount, sst.getUniqueCount());
             assertEquals(7, sst.getCount());
-            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
                 sst.writeTo(bos);
                 try (TempFileSharedStringsTable sst2 = new TempFileSharedStringsTable(true)) {
                     sst2.readFrom(bos.toInputStream());

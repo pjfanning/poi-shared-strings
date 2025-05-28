@@ -25,6 +25,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.util.function.Consumer;
 
+import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
@@ -100,10 +101,6 @@ public class TestEntityExpansion {
         } catch(ParserConfigurationException e) {
             throw new RuntimeException("SAX parser appears to be broken - " + e.getMessage());
         }
-    }
-
-    private InputStream getResourceStream(String filename) {
-        return TestEntityExpansion.class.getClassLoader().getResourceAsStream(filename);
     }
 
     private String getExpected() {

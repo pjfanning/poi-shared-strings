@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -44,7 +45,7 @@ public class TestMapBackedCommentsTable {
     @Test
     public void testWriteEmpty() throws Exception {
         try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
+                UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get();
                 MapBackedCommentsTable commentsTable = new MapBackedCommentsTable(true)
         ) {
             commentsTable.writeTo(bos);
@@ -68,7 +69,7 @@ public class TestMapBackedCommentsTable {
     @Test
     public void testReadStrictXML() throws Exception {
         try (
-                InputStream is = TestMapBackedCommentsTable.class.getClassLoader().getResourceAsStream("strict-comments1.xml");
+                InputStream is = getResourceStream("strict-comments1.xml");
                 MapBackedCommentsTable ct = new MapBackedCommentsTable(false)
         ) {
             ct.readFrom(is);
@@ -196,7 +197,7 @@ public class TestMapBackedCommentsTable {
 
     @Test
     public void testReadXMLWithPhoneticHints() throws Exception {
-        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings-with-phonetic-hints.xml");
+        try (InputStream is = getResourceStream("sharedStrings-with-phonetic-hints.xml");
              MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(false)) {
             sst.readFrom(is);
             assertEquals(3, sst.getUniqueCount());
@@ -254,7 +255,7 @@ public class TestMapBackedCommentsTable {
 
     private void testReadXML(boolean fullFormat) throws Exception {
         try (
-                InputStream is = TestMapBackedCommentsTable.class.getClassLoader().getResourceAsStream("comments1.xml");
+                InputStream is = getResourceStream("comments1.xml");
                 MapBackedCommentsTable ct = new MapBackedCommentsTable(fullFormat)
         ) {
             ct.readFrom(is);
@@ -288,8 +289,8 @@ public class TestMapBackedCommentsTable {
 
     private void testWrite(boolean fullFormat) throws Exception {
         try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
-                InputStream is = TestMapBackedCommentsTable.class.getClassLoader().getResourceAsStream("comments1.xml");
+                UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get();
+                InputStream is = getResourceStream("comments1.xml");
                 MapBackedCommentsTable commentsTable = new MapBackedCommentsTable(fullFormat)
         ) {
             commentsTable.readFrom(is);

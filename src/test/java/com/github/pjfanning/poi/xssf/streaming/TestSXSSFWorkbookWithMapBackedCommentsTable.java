@@ -41,7 +41,7 @@ public class TestSXSSFWorkbookWithMapBackedCommentsTable {
             Comment comment = drawing.createCellComment(anchor);
             comment.setString(wb.getCreationHelper().createRichTextString("comment1"));
             cell.setCellComment(comment);
-            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
                 wb.write(bos);
                 try (XSSFWorkbook wb2 = new XSSFWorkbook(bos.toInputStream())) {
                     XSSFSheet xssfSheet = wb2.getSheetAt(0);
@@ -80,7 +80,7 @@ public class TestSXSSFWorkbookWithMapBackedCommentsTable {
             cell.setCellComment(comment);
             comment.setString(wb.getCreationHelper().createRichTextString("commentUpdated"));
             comment.setAuthor("updatedAuthor");
-            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
                 wb.write(bos);
                 try (XSSFWorkbook wb2 = new XSSFWorkbook(bos.toInputStream())) {
                     XSSFSheet xssfSheet = wb2.getSheetAt(0);
@@ -118,7 +118,7 @@ public class TestSXSSFWorkbookWithMapBackedCommentsTable {
             comment.setString(wb.getCreationHelper().createRichTextString("comment1"));
             cell.setCellComment(comment);
             comment.setAddress(new CellAddress("B2"));
-            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
                 wb.write(bos);
                 try (XSSFWorkbook wb2 = new XSSFWorkbook(bos.toInputStream())) {
                     XSSFSheet xssfSheet = wb2.getSheetAt(0);

@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static com.github.pjfanning.poi.xssf.streaming.TestTempFileSharedStringsTable.MINIMAL_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -173,7 +174,7 @@ public class TestMapBackedSharedStringsTable {
         java.util.Random rnd = new java.util.Random();
         byte[] bytes = new byte[1028];
         try (
-                UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream();
+                UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get();
                 MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)
         ) {
             for (int i = 0; i < size; i++) {
@@ -192,7 +193,7 @@ public class TestMapBackedSharedStringsTable {
     }
 
     private void testReadOOXMLStrict(boolean fullFormat) throws Exception {
-        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("strictSharedStrings.xml");
+        try (InputStream is = getResourceStream("strictSharedStrings.xml");
              MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.readFrom(is);
             assertEquals(15, sst.getUniqueCount());
@@ -209,7 +210,7 @@ public class TestMapBackedSharedStringsTable {
     }
 
     private void testReadStyledXML(boolean fullFormat) throws Exception {
-        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("styledSharedStrings.xml");
+        try (InputStream is = getResourceStream("styledSharedStrings.xml");
              MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.readFrom(is);
             assertEquals(1, sst.getCount());
@@ -220,7 +221,7 @@ public class TestMapBackedSharedStringsTable {
     }
 
     private void testReadXML(boolean fullFormat) throws Exception {
-        try (InputStream is = TestMapBackedSharedStringsTable.class.getClassLoader().getResourceAsStream("sharedStrings.xml");
+        try (InputStream is = getResourceStream("sharedStrings.xml");
              MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(fullFormat)) {
             sst.readFrom(is);
             assertEquals(60, sst.getCount());
@@ -247,7 +248,7 @@ public class TestMapBackedSharedStringsTable {
             int expectedUniqueCount = fullFormat ? 3 : 2;
             assertEquals(expectedUniqueCount, sst.getUniqueCount());
             assertEquals(7, sst.getCount());
-            try (UnsynchronizedByteArrayOutputStream bos = new UnsynchronizedByteArrayOutputStream()) {
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
                 sst.writeTo(bos);
                 try (MapBackedSharedStringsTable sst2 = new MapBackedSharedStringsTable(true)) {
                     sst2.readFrom(bos.toInputStream());
