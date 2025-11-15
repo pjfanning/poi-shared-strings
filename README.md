@@ -1,5 +1,5 @@
 ![Build Status](https://github.com/pjfanning/poi-shared-strings/actions/workflows/ci.yml/badge.svg)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.pjfanning/poi-shared-strings)
+![Maven Central](https://img.shields.io/maven-central/v/com.github.pjfanning/poi-shared-strings)
 
 # poi-shared-strings
 Memory efficient Shared Strings Table and Comments Table implementations for [POI](https://poi.apache.org/) xlsx streaming.
