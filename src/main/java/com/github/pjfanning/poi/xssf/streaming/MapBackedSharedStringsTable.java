@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,7 +71,13 @@ public class MapBackedSharedStringsTable extends SharedStringsTableBase {
 
     @Override
     protected Iterator<Integer> keyIterator() {
-        return strings.keySet().iterator();
+        // strings is a ConcurrentHashMap and its iteration order stops matching the index order
+        // once the keys reach 65536 - ConcurrentHashMap spreads Integer hashes with
+        // (h ^ (h >>> 16)), which is the identity only while h is below 65536. writeTo emits the
+        // <si> entries positionally, so the keys have to be sorted before they are handed over.
+        final Integer[] keys = strings.keySet().toArray(new Integer[0]);
+        Arrays.sort(keys);
+        return Arrays.asList(keys).iterator();
     }
 
     /**

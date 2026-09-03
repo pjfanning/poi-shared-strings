@@ -82,6 +82,11 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
 
     protected abstract Logger getLogger();
 
+    /**
+     * @return an iterator over the indexes of the entries in this table, in ascending index order.
+     *         {@link #writeTo(OutputStream)} writes the entries positionally, so this order
+     *         determines the index that each string ends up with in the output file.
+     */
     protected abstract Iterator<Integer> keyIterator();
 
     /**
