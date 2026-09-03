@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </p>
  */
 public class MapBackedCommentsTable extends CommentsTableBase {
-    private static Logger log = LoggerFactory.getLogger(MapBackedCommentsTable.class);
+    private static final Logger log = LoggerFactory.getLogger(MapBackedCommentsTable.class);
 
     public MapBackedCommentsTable() {
         this(false);

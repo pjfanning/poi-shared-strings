@@ -68,7 +68,7 @@ public class SXSSFFactory extends XSSFFactory {
                 return new TempFileSharedStringsTable(encryptTempFiles);
             } catch (Exception e) {
                 throw new IllegalStateException("Exception creating TempFileSharedStringsTable; com.h2database h2 jar is " +
-                        "required for this feature and is not included as a core dependency of poi-shared-strings");
+                        "required for this feature and is not included as a core dependency of poi-shared-strings", e);
             }
         }
         if (XSSFRelation.SHEET_COMMENTS.getRelation().equals(descriptor.getRelation()) && enableTempFileComments) {
@@ -76,7 +76,7 @@ public class SXSSFFactory extends XSSFFactory {
                 return new TempFileCommentsTable(encryptTempFiles);
             } catch (Exception e) {
                 throw new IllegalStateException("Exception creating TempFileCommentsTable; com.h2database h2 jar is " +
-                        "required for this feature and is not included as a core dependency of poi-shared-strings");
+                        "required for this feature and is not included as a core dependency of poi-shared-strings", e);
             }
         }
         return super.newDocumentPart(descriptor);
