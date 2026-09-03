@@ -26,6 +26,7 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -57,6 +58,8 @@ import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
 public abstract class SharedStringsTableBase extends SharedStringsTable {
     private static final QName COUNT_QNAME = new QName("count");
     private static final QName UNIQUE_COUNT_QNAME = new QName("uniqueCount");
+    private static final List<String> SI_WRAPPING_TAGS =
+            Collections.unmodifiableList(Arrays.asList("sst", "si"));
     protected final boolean fullFormat;
 
     /**
@@ -128,8 +131,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
                             }
                         } else if (localPart.equals("si")) {
                             if (fullFormat) {
-                                List<String> tags = Arrays.asList(new String[]{"sst", "si"});
-                                String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                                String text = TextParser.getXMLText(xmlEventReader, startTag, SI_WRAPPING_TAGS);
                                 CTSst sst;
                                 try {
                                     sst = SstDocument.Factory.parse(text).getSst();
