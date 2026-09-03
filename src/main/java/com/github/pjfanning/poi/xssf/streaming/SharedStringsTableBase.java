@@ -139,15 +139,17 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
                         }
                     }
                 }
-                if (count > -1) {
-                    this.count = count;
-                }
-                if (uniqueCount > -1) {
-                    if (uniqueCount != this.uniqueCount) {
-                        getLogger().warn("SharedStringsTable has uniqueCount={} but read {} entries. This will probably cause some cells to be misinterpreted.",
-                                uniqueCount, this.uniqueCount);
+                synchronized (this) {
+                    if (count > -1) {
+                        this.count = count;
                     }
-                    this.uniqueCount = uniqueCount;
+                    if (uniqueCount > -1) {
+                        if (uniqueCount != this.uniqueCount) {
+                            getLogger().warn("SharedStringsTable has uniqueCount={} but read {} entries. This will probably cause some cells to be misinterpreted.",
+                                    uniqueCount, this.uniqueCount);
+                        }
+                        this.uniqueCount = uniqueCount;
+                    }
                 }
             } finally {
                 xmlEventReader.close();
@@ -215,7 +217,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
      * @return the total count of strings in the workbook
      */
     @Override
-    public int getCount() {
+    public synchronized int getCount() {
         return count;
     }
 
@@ -227,7 +229,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
      * @return the total count of unique strings in the workbook
      */
     @Override
-    public int getUniqueCount() {
+    public synchronized int getUniqueCount() {
         return uniqueCount;
     }
 
@@ -235,31 +237,42 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
         if (st == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
+        // the serialization is the expensive part, so keep it outside the lock
         String s = xmlText(st);
-        count++;
-        if (!keepDuplicates && stmap.containsKey(s)) {
-            return stmap.get(s);
-        }
+        synchronized (this) {
+            count++;
+            if (!keepDuplicates) {
+                Integer existingIdx = stmap.get(s);
+                if (existingIdx != null) {
+                    return existingIdx;
+                }
+            }
 
-        int idx = uniqueCount++;
-        stmap.put(s, idx);
-        strings.put(idx, st.xmlText());
-        return idx;
+            int idx = uniqueCount++;
+            stmap.put(s, idx);
+            strings.put(idx, st.xmlText());
+            return idx;
+        }
     }
 
     private int addPlainStringEntry(String string, boolean keepDuplicates) {
         if (string == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
-        count++;
-        if (!keepDuplicates && stmap.containsKey(string)) {
-            return stmap.get(string);
-        }
+        synchronized (this) {
+            count++;
+            if (!keepDuplicates) {
+                Integer existingIdx = stmap.get(string);
+                if (existingIdx != null) {
+                    return existingIdx;
+                }
+            }
 
-        int idx = uniqueCount++;
-        stmap.put(string, idx);
-        strings.put(idx, string);
-        return idx;
+            int idx = uniqueCount++;
+            stmap.put(string, idx);
+            strings.put(idx, string);
+            return idx;
+        }
     }
 
     /**

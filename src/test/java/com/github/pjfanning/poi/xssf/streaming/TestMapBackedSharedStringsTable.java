@@ -16,8 +16,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static com.github.pjfanning.poi.xssf.streaming.TestTempFileSharedStringsTable.MINIMAL_XML;
@@ -25,8 +33,52 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class TestMapBackedSharedStringsTable {
+    @Test
+    public void testConcurrentAddSharedStringItem() throws Exception {
+        // count/uniqueCount are plain ints and the dedupe was a check-then-act on stmap, so
+        // concurrent adds could hand out the same index to two different strings
+        final int threads = 8;
+        final int perThread = 2000;
+        final int total = threads * perThread;
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(false)) {
+            final ExecutorService pool = Executors.newFixedThreadPool(threads);
+            try {
+                final CountDownLatch start = new CountDownLatch(1);
+                final List<Future<?>> futures = new ArrayList<>();
+                for (int t = 0; t < threads; t++) {
+                    final int threadNo = t;
+                    futures.add(pool.submit(() -> {
+                        start.await();
+                        for (int i = 0; i < perThread; i++) {
+                            sst.addSharedStringItem(new XSSFRichTextString("t" + threadNo + "-s" + i));
+                        }
+                        return null;
+                    }));
+                }
+                start.countDown();
+                for (Future<?> future : futures) {
+                    future.get();
+                }
+            } finally {
+                pool.shutdown();
+            }
+
+            assertEquals("count", total, sst.getCount());
+            assertEquals("uniqueCount", total, sst.getUniqueCount());
+            // every index from 0 to total-1 must hold exactly one of the strings we added
+            final Set<String> seen = new HashSet<>();
+            for (int i = 0; i < total; i++) {
+                final String value = sst.getString(i);
+                assertNotNull("no entry at index " + i, value);
+                assertTrue("index " + i + " holds a duplicate: " + value, seen.add(value));
+            }
+            assertEquals("distinct strings stored", total, seen.size());
+        }
+    }
+
     @Test
     public void testWriteOut() throws Exception {
         testWriteOut(false);
