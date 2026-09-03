@@ -242,8 +242,11 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
         }
         String s = xmlText(st);
         count++;
-        if (!keepDuplicates && stmap.containsKey(s)) {
-            return stmap.get(s);
+        if (!keepDuplicates) {
+            Integer existingIdx = stmap.get(s);
+            if (existingIdx != null) {
+                return existingIdx;
+            }
         }
 
         int idx = uniqueCount++;
@@ -257,8 +260,11 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
         count++;
-        if (!keepDuplicates && stmap.containsKey(string)) {
-            return stmap.get(string);
+        if (!keepDuplicates) {
+            Integer existingIdx = stmap.get(string);
+            if (existingIdx != null) {
+                return existingIdx;
+            }
         }
 
         int idx = uniqueCount++;
