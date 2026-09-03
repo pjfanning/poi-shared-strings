@@ -23,7 +23,7 @@ import java.util.Iterator;
  * </p>
  */
 public class TempFileCommentsTable extends CommentsTableBase {
-    private static Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
+    private static final Logger log = LoggerFactory.getLogger(TempFileCommentsTable.class);
 
     private File tempFile;
     private MVStore mvStore;
