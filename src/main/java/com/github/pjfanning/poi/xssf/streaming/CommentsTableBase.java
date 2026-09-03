@@ -36,8 +36,10 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.apache.poi.xssf.usermodel.XSSFRelation.NS_SPREADSHEETML;
@@ -55,6 +57,10 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
     protected final boolean fullFormat;
     protected ConcurrentMap<String, SerializableComment> comments;
     protected ConcurrentMap<Integer, String> authors;
+
+    /** reverse view of <code>authors</code>, so findAuthor does not have to scan */
+    private Map<String, Integer> authorIndex;
+    private int authorIndexBuiltAt = -1;
 
     private static final QName REF_QNAME = new QName("ref");
     private static final QName AUTHOR_ID_QNAME = new QName("authorId");
@@ -169,23 +175,50 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
         return authors.get((int)authorId);
     }
 
+    /**
+     * Builds (or rebuilds) the name to id view of the authors map. readFrom populates
+     * <code>authors</code> directly, so the view cannot be kept up to date from findAuthor
+     * alone. The authors map only ever grows, so a size change is enough to spot a stale view.
+     */
+    private Map<String, Integer> authorIndex() {
+        if (authorIndex == null || authorIndexBuiltAt != authors.size()) {
+            Map<String, Integer> index = new HashMap<>();
+            Iterator<Integer> authorIdIterator = authorsKeyIterator();
+            while (authorIdIterator.hasNext()) {
+                Integer authorId = authorIdIterator.next();
+                if (authorId != null) {
+                    String existingAuthor = authors.get(authorId);
+                    if (existingAuthor != null) {
+                        // ids are iterated in ascending order, so keeping the first occurrence
+                        // returns the same id the previous linear scan would have returned
+                        index.putIfAbsent(existingAuthor, authorId);
+                    }
+                }
+            }
+            authorIndex = index;
+            authorIndexBuiltAt = authors.size();
+        }
+        return authorIndex;
+    }
+
     @Override
     public int findAuthor(String author) {
         String nullSafeAuthor = author == null ? "" : author;
-        Iterator<Integer> authorIdIterator = authorsKeyIterator();
-        while (authorIdIterator.hasNext()) {
-            Integer authorId = authorIdIterator.next();
-            String existingAuthor = authorId == null ? null : authors.get(authorId);
-            if (nullSafeAuthor.equals(existingAuthor)) {
-                return authorId;
-            }
+        Map<String, Integer> index = authorIndex();
+        Integer existingId = index.get(nullSafeAuthor);
+        if (existingId != null) {
+            return existingId;
         }
-        int index = getNumberOfAuthors();
-        if (index == 0 && !nullSafeAuthor.equals("")) {
-            authors.put(index++, "");
+        int newId = getNumberOfAuthors();
+        if (newId == 0 && !nullSafeAuthor.equals("")) {
+            authors.put(newId, "");
+            index.put("", newId);
+            newId++;
         }
-        authors.put(index, nullSafeAuthor);
-        return index;
+        authors.put(newId, nullSafeAuthor);
+        index.put(nullSafeAuthor, newId);
+        authorIndexBuiltAt = authors.size();
+        return newId;
     }
 
     @Override
