@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static com.github.pjfanning.poi.xssf.streaming.TestTempFileSharedStringsTable.MINIMAL_XML;
@@ -27,6 +29,30 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 
 public class TestMapBackedSharedStringsTable {
+    @Test
+    public void testWriteOutKeepsIndexOrderPast65536Entries() throws Exception {
+        // ConcurrentHashMap iteration order stops matching the index order at 65536 entries,
+        // which used to write the <si> elements out of order and silently shift the indexes
+        final int count = 70000;
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(false)) {
+            for (int i = 0; i < count; i++) {
+                sst.addSharedStringItem(new XSSFRichTextString("string-" + i));
+            }
+            final String xml;
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
+                sst.writeTo(bos);
+                xml = new String(bos.toByteArray(), StandardCharsets.UTF_8);
+            }
+            final Matcher matcher = Pattern.compile("<t[^>]*>(.*?)</t>").matcher(xml);
+            int idx = 0;
+            while (matcher.find()) {
+                assertEquals("entry at position " + idx, "string-" + idx, matcher.group(1));
+                idx++;
+            }
+            assertEquals("number of entries written", count, idx);
+        }
+    }
+
     @Test
     public void testWriteOut() throws Exception {
         testWriteOut(false);
