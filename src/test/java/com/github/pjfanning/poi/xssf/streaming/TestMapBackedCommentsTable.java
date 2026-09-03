@@ -116,6 +116,47 @@ public class TestMapBackedCommentsTable {
     }
 
     @Test
+    public void testPlainModeKeepsCommentsAsPlainText() throws Exception {
+        try (MapBackedCommentsTable ct = new MapBackedCommentsTable(false)) {
+            try (InputStream is = getResourceStream("comments1.xml")) {
+                ct.readFrom(is);
+            }
+            assertTrue("expected some comments", ct.getNumberOfComments() > 0);
+            for (SerializableComment comment : ct.comments.values()) {
+                assertFalse("plain mode should not hold comment text as CTRst XML",
+                        comment.isFullFormat());
+            }
+
+            // writing and re-reading must be stable, and must not change the text
+            final String firstWrite;
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
+                ct.writeTo(bos);
+                firstWrite = new String(bos.toByteArray(), StandardCharsets.UTF_8);
+            }
+            try (MapBackedCommentsTable readBack = new MapBackedCommentsTable(false)) {
+                readBack.readFrom(new ByteArrayInputStream(firstWrite.getBytes(StandardCharsets.UTF_8)));
+                assertEquals("comment count survives the round trip",
+                        ct.getNumberOfComments(), readBack.getNumberOfComments());
+                for (java.util.Map.Entry<String, SerializableComment> entry : ct.comments.entrySet()) {
+                    final SerializableComment original = entry.getValue();
+                    final SerializableComment reloaded = readBack.comments.get(entry.getKey());
+                    assertNotNull("comment at " + entry.getKey(), reloaded);
+                    assertEquals("text at " + entry.getKey(),
+                            original.getCommentText(), reloaded.getCommentText());
+                    assertEquals("author at " + entry.getKey(),
+                            original.getAuthor(), reloaded.getAuthor());
+                }
+                final String secondWrite;
+                try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
+                    readBack.writeTo(bos);
+                    secondWrite = new String(bos.toByteArray(), StandardCharsets.UTF_8);
+                }
+                assertEquals("writing is stable across a round trip", firstWrite, secondWrite);
+            }
+        }
+    }
+
+    @Test
     public void testReadXML() throws Exception {
         testReadXML(false);
     }

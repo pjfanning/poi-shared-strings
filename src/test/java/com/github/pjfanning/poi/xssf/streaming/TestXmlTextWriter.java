@@ -29,6 +29,15 @@ public class TestXmlTextWriter {
         SI_SAVE_OPTIONS.setSaveSyntheticDocumentElement(new QName(NS_SPREADSHEETML, "si"));
     }
 
+    private static final XmlOptions TEXT_SAVE_OPTIONS = new XmlOptions();
+    static {
+        TEXT_SAVE_OPTIONS.setCharacterEncoding("UTF-8");
+        TEXT_SAVE_OPTIONS.setSaveAggressiveNamespaces();
+        TEXT_SAVE_OPTIONS.setUseDefaultNamespace(true);
+        TEXT_SAVE_OPTIONS.setSaveImplicitNamespaces(Collections.singletonMap("", NS_SPREADSHEETML));
+        TEXT_SAVE_OPTIONS.setSaveSyntheticDocumentElement(new QName(NS_SPREADSHEETML, "text"));
+    }
+
     private static String viaXmlBeans(String text) {
         return new XSSFRichTextString(text).getCTRst().xmlText(SI_SAVE_OPTIONS);
     }
@@ -125,6 +134,24 @@ public class TestXmlTextWriter {
         assertMatchesXmlBeans("\u65e5\u672c\u8a9e");
         assertMatchesXmlBeans("emoji\ud83d\ude00here");
         assertMatchesXmlBeans("lone\ud800surrogate");
+    }
+
+    @Test
+    public void testCommentTextElementMatchesXmlBeans() throws Exception {
+        // the comments table writes the same text wrapped in <text> rather than <si>
+        final String[] cases = {
+            "plain", "", " lead", "trail ", "amp & here", "lt < gt >", "quote \" apos '",
+            "cdata ]]> close", "\u00e9\u65e5", "multi\nline", "carriage\rreturn"
+        };
+        for (String text : cases) {
+            final String expected =
+                    new XSSFRichTextString(text).getCTRst().xmlText(TEXT_SAVE_OPTIONS);
+            final StringWriter sw = new StringWriter();
+            sw.write("<text>");
+            XmlTextWriter.writeTElement(sw, text);
+            sw.write("</text>");
+            assertEquals("comment text for " + describe(text), expected, sw.toString());
+        }
     }
 
     @Test
