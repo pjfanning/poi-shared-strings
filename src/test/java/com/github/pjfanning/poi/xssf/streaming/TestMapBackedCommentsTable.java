@@ -11,6 +11,7 @@ import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
@@ -23,6 +24,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static org.junit.Assert.assertEquals;
@@ -31,6 +34,37 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestMapBackedCommentsTable {
+
+    @Test
+    public void testAuthorSetViaDelegateIsDeclaredInOutput() throws Exception {
+        // findAuthor registers unseen authors, so resolving them while writing the comments
+        // used to append an author after <authors> had already been written, leaving the
+        // comment pointing at an authorId that was never declared
+        try (MapBackedCommentsTable ct = new MapBackedCommentsTable(false)) {
+            ct.createNewComment(new XSSFClientAnchor(0, 0, 0, 0, 1, 1, 2, 2))
+                    .setString(new XSSFRichTextString("hello"));
+            // DelegatingXSSFComment.setAuthor bypasses the POI code that registers the author
+            ct.findCellComment(new CellAddress(1, 1)).setAuthor("Alice");
+
+            final String xml;
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
+                ct.writeTo(bos);
+                xml = new String(bos.toByteArray(), StandardCharsets.UTF_8);
+            }
+
+            final int declaredAuthors = xml.split("<author>", -1).length - 1;
+            assertTrue("expected at least one <author> to be declared", declaredAuthors > 0);
+            assertTrue("expected Alice to be declared as an author", xml.contains("<author>Alice</author>"));
+
+            final Matcher matcher = Pattern.compile("authorId=\"(\\d+)\"").matcher(xml);
+            assertTrue("expected a comment with an authorId", matcher.find());
+            do {
+                final int authorId = Integer.parseInt(matcher.group(1));
+                assertTrue("authorId " + authorId + " is out of range, only " + declaredAuthors
+                        + " author(s) declared", authorId < declaredAuthors);
+            } while (matcher.find());
+        }
+    }
 
     @Test
     public void testReadXML() throws Exception {

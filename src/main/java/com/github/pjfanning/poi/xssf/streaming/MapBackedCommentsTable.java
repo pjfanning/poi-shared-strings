@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </p>
  */
 public class MapBackedCommentsTable extends CommentsTableBase {
-    private static Logger log = LoggerFactory.getLogger(MapBackedCommentsTable.class);
+    private static final Logger log = LoggerFactory.getLogger(MapBackedCommentsTable.class);
 
     public MapBackedCommentsTable() {
         this(false);
@@ -63,7 +64,12 @@ public class MapBackedCommentsTable extends CommentsTableBase {
 
     @Override
     protected Iterator<Integer> authorsKeyIterator() {
-        return authors.keySet().iterator();
+        // authors is a ConcurrentHashMap, whose iteration order is not the key order once the
+        // keys reach 65536. writeTo emits the <author> entries positionally, so the ids have to
+        // be sorted before they are handed over.
+        final Integer[] authorIds = authors.keySet().toArray(new Integer[0]);
+        Arrays.sort(authorIds);
+        return Arrays.asList(authorIds).iterator();
     }
 
     @Override

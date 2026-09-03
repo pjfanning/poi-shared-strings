@@ -277,6 +277,17 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
     public void writeTo(OutputStream out) throws IOException {
         Writer writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
         try {
+            // findAuthor registers authors it has not seen before, so every author has to be
+            // resolved up front. Doing it lazily while writing the comments would append authors
+            // after the <authors> element had already been written, leaving those comments
+            // pointing at an authorId that is never declared.
+            Iterator<String> authorRegistrationIterator = commentsKeyIterator();
+            while (authorRegistrationIterator.hasNext()) {
+                SerializableComment comment = comments.get(authorRegistrationIterator.next());
+                if (comment != null) {
+                    findAuthor(comment.getAuthor());
+                }
+            }
             writer.write("<comments xmlns=\"");
             writer.write(NS_SPREADSHEETML);
             writer.write("\"><authors>");
@@ -285,7 +296,7 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                 Integer authorId = authorIdIterator.next();
                 String author = authorId == null ? null : authors.get(authorId);
                 writer.write("<author>");
-                writer.write(StringEscapeUtils.escapeXml11(author));
+                writer.write(author == null ? "" : StringEscapeUtils.escapeXml11(author));
                 writer.write("</author>");
             }
             writer.write("</authors>");
