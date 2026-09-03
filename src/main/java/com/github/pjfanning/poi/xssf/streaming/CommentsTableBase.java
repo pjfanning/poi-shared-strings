@@ -35,6 +35,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
@@ -54,6 +55,11 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
     protected final boolean fullFormat;
     protected ConcurrentMap<String, SerializableComment> comments;
     protected ConcurrentMap<Integer, String> authors;
+
+    private static final QName REF_QNAME = new QName("ref");
+    private static final QName AUTHOR_ID_QNAME = new QName("authorId");
+    private static final List<String> TEXT_WRAPPING_TAGS = Collections.unmodifiableList(
+            Arrays.asList("comments", "commentList", "comment", "text"));
 
     private static final XmlOptions textSaveOptions = new XmlOptions(Constants.saveOptions);
     static {
@@ -120,8 +126,8 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                         if (se.getName().getLocalPart().equals("author")) {
                             authors.put(getNumberOfAuthors(), xmlEventReader.getElementText());
                         } else if (se.getName().getLocalPart().equals("comment")) {
-                            String ref = se.getAttributeByName(new QName("ref")).getValue();
-                            String authorId = se.getAttributeByName(new QName("authorId")).getValue();
+                            String ref = se.getAttributeByName(REF_QNAME).getValue();
+                            String authorId = se.getAttributeByName(AUTHOR_ID_QNAME).getValue();
                             XSSFRichTextString str;
                             if (fullFormat) {
                                 try {
@@ -346,8 +352,7 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
             QName startTag = startElement.getName();
             switch(startTag.getLocalPart()) {
                 case "text":
-                    List<String> tags = Arrays.asList(new String[]{"comments", "commentList", "comment", "text"});
-                    String text = TextParser.getXMLText(xmlEventReader, startTag, tags);
+                    String text = TextParser.getXMLText(xmlEventReader, startTag, TEXT_WRAPPING_TAGS);
                     CTCommentList commentsList = CommentsDocument.Factory.parse(text).getComments().getCommentList();
                     richTextString = new XSSFRichTextString(commentsList.getCommentArray(0).getText());
                     break;
