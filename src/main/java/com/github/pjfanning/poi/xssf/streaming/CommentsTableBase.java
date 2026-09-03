@@ -128,20 +128,21 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                         } else if (se.getName().getLocalPart().equals("comment")) {
                             String ref = se.getAttributeByName(REF_QNAME).getValue();
                             String authorId = se.getAttributeByName(AUTHOR_ID_QNAME).getValue();
-                            XSSFRichTextString str;
+                            SerializableComment xc = new SerializableComment();
+                            xc.setAddress(new CellAddress(ref));
+                            xc.setAuthor(authors.get(Integer.parseInt(authorId)));
                             if (fullFormat) {
                                 try {
-                                    str = parseFullComment(xmlEventReader);
+                                    xc.setString(parseFullComment(xmlEventReader));
                                 } catch (XmlException e) {
                                     throw new IOException("Failed to parse comment", e);
                                 }
                             } else {
-                                str = new XSSFRichTextString(parseSimplifiedComment(xmlEventReader));
+                                // keep the text as text. Wrapping it in an XSSFRichTextString here
+                                // built a CTRst and stored its XML, which is what full format mode
+                                // is for - in plain mode it only bought work at both ends.
+                                xc.setString(parseSimplifiedComment(xmlEventReader));
                             }
-                            SerializableComment xc = new SerializableComment();
-                            xc.setAddress(new CellAddress(ref));
-                            xc.setAuthor(authors.get(Integer.parseInt(authorId)));
-                            xc.setString(str);
                             comments.put(ref, xc);
                         }
                     }
@@ -319,14 +320,19 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                     writer.write("\" authorId=\"");
                     writer.write(Integer.toString(authorId));
                     writer.write("\">");
-                    XSSFRichTextString rts = comment.getString();
-                    if (rts != null) {
-                        if (rts.getCTRst() != null) {
+                    if (comment.isFullFormat()) {
+                        XSSFRichTextString rts = comment.getString();
+                        if (rts != null && rts.getCTRst() != null) {
                             writer.write(rts.getCTRst().xmlText(textSaveOptions));
-                        } else {
-                            writer.write("<text><t>");
-                            XmlTextWriter.writeEscaped(writer, comment.getString().getString());
-                            writer.write("</t></text>");
+                        }
+                    } else {
+                        // the comment is held as plain text, so write it out directly rather
+                        // than building a CTRst only to serialize it straight back
+                        String text = comment.getCommentText();
+                        if (text != null) {
+                            writer.write("<text>");
+                            XmlTextWriter.writeTElement(writer, text);
+                            writer.write("</text>");
                         }
                     }
                     writer.write("</comment>");

@@ -150,6 +150,14 @@ class SerializableComment implements Serializable {
         fullFormat = false;
     }
 
+    /**
+     * @return whether the comment text is held as CTRst XML (true) or as plain text (false).
+     *         Plain text can be written straight back out without going through XMLBeans.
+     */
+    boolean isFullFormat() {
+        return fullFormat;
+    }
+
     private CTRst getCTRst() throws POIXMLException {
         if (ctRst == null && commentText != null) {
             //ctRst is transient so might need to be recreated from commentText
@@ -162,9 +170,9 @@ class SerializableComment implements Serializable {
                             throw new POIXMLException("Could not parse comment rich text string", e);
                         }
                     } else {
-                        XSSFRichTextString richTextString = new XSSFRichTextString();
-                        richTextString.setString(commentText);
-                        ctRst = richTextString.getCTRst();
+                        // equivalent to new XSSFRichTextString() followed by setString, since
+                        // clearFormatting is a no-op on a fresh instance, but about twice as fast
+                        ctRst = new XSSFRichTextString(commentText).getCTRst();
                     }
                 }
             }
