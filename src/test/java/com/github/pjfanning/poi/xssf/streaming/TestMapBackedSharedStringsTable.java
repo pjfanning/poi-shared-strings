@@ -25,8 +25,10 @@ import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStr
 import static com.github.pjfanning.poi.xssf.streaming.TestTempFileSharedStringsTable.MINIMAL_XML;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class TestMapBackedSharedStringsTable {
     @Test
@@ -50,6 +52,35 @@ public class TestMapBackedSharedStringsTable {
                 idx++;
             }
             assertEquals("number of entries written", count, idx);
+        }
+    }
+
+    @Test
+    public void testFullFormatDedupeAndRoundTrip() throws Exception {
+        // the dedupe key and the stored value now come from one serialization, so check that
+        // identical rich strings still collapse and that the formatting survives a round trip
+        try (MapBackedSharedStringsTable sst = new MapBackedSharedStringsTable(true)) {
+            final XSSFFont bold = new XSSFFont();
+            bold.setBold(true);
+
+            final XSSFRichTextString rich1 = new XSSFRichTextString("hello world");
+            rich1.applyFont(0, 5, bold);
+            final XSSFRichTextString rich2 = new XSSFRichTextString("hello world");
+            rich2.applyFont(0, 5, bold);
+            final XSSFRichTextString unformatted = new XSSFRichTextString("hello world");
+
+            final int idx1 = sst.addSharedStringItem(rich1);
+            final int idx2 = sst.addSharedStringItem(rich2);
+            final int idx3 = sst.addSharedStringItem(unformatted);
+
+            assertEquals("identically formatted strings should share an index", idx1, idx2);
+            assertNotEquals("differently formatted strings should not share an index", idx1, idx3);
+            assertEquals("uniqueCount", 2, sst.getUniqueCount());
+            assertEquals("count", 3, sst.getCount());
+
+            final XSSFRichTextString readBack = (XSSFRichTextString) sst.getItemAt(idx1);
+            assertEquals("hello world", readBack.getString());
+            assertTrue("formatting runs should survive", readBack.numFormattingRuns() > 0);
         }
     }
 

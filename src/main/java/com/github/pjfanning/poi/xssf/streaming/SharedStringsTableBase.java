@@ -240,7 +240,11 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
         if (st == null) {
             throw new NullPointerException("Cannot add null entry to SharedStringsTable");
         }
-        String s = xmlText(st);
+        // the default serialization is self contained, so one call covers both the dedupe key
+        // and the stored value. The inherited xmlText(CTRst) helper saves the inner XML with
+        // aggressive namespaces, which is shorter but cannot be parsed back on its own, so it
+        // could only ever be the key - which meant serializing the same object twice.
+        String s = st.xmlText();
         count++;
         if (!keepDuplicates) {
             Integer existingIdx = stmap.get(s);
@@ -251,7 +255,7 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
 
         int idx = uniqueCount++;
         stmap.put(s, idx);
-        strings.put(idx, st.xmlText());
+        strings.put(idx, s);
         return idx;
     }
 
