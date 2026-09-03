@@ -316,9 +316,17 @@ public abstract class SharedStringsTableBase extends SharedStringsTable {
             Iterator<Integer> idIter = keyIterator();
             while (idIter.hasNext()) {
                 Integer stringId = idIter.next();
-                XSSFRichTextString rst = (XSSFRichTextString)getItemAt(stringId);
-                if (rst != null) {
-                    writer.write(rst.getCTRst().xmlText(siSaveOptions));
+                if (fullFormat) {
+                    XSSFRichTextString rst = (XSSFRichTextString)getItemAt(stringId);
+                    if (rst != null) {
+                        writer.write(rst.getCTRst().xmlText(siSaveOptions));
+                    }
+                } else {
+                    // the entry is a plain string, so write the XML for it directly rather than
+                    // inflating an XSSFRichTextString only to serialize it straight back out
+                    writer.write("<si>");
+                    XmlTextWriter.writeTElement(writer, getPlainStringEntryAt(stringId));
+                    writer.write("</si>");
                 }
             }
             writer.write("</sst>");
