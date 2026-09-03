@@ -17,6 +17,7 @@ import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,6 +31,7 @@ import java.util.regex.Pattern;
 import static com.github.pjfanning.poi.xssf.streaming.TestIOUtils.getResourceStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -63,6 +65,53 @@ public class TestMapBackedCommentsTable {
                 assertTrue("authorId " + authorId + " is out of range, only " + declaredAuthors
                         + " author(s) declared", authorId < declaredAuthors);
             } while (matcher.find());
+        }
+    }
+
+    @Test
+    public void testSpecialCharactersInAuthorsRoundTrip() throws Exception {
+        // the write path escapes authors itself rather than going through XMLBeans,
+        // so check the awkward characters survive a write/read round trip
+        final String[] authors = {
+            "plain",
+            "amp & author",
+            "angle < and >",
+            "quote \" and apos '",
+            "cdata ]]> close",
+            "unicode \u00e9\u65e5"
+        };
+        final String[] texts = {
+            "plain text",
+            "text with & ampersand",
+            "text with < and > angles",
+            "text with \"quotes\" and 'apostrophes'",
+            "text with ]]> in it",
+            "text with \u00e9\u65e5 unicode"
+        };
+
+        final String xml;
+        try (MapBackedCommentsTable ct = new MapBackedCommentsTable(false)) {
+            for (int i = 0; i < authors.length; i++) {
+                final XSSFComment comment = ct.createNewComment(
+                        new XSSFClientAnchor(0, 0, 0, 0, 0, i, 1, i + 1));
+                comment.setString(new XSSFRichTextString(texts[i]));
+                comment.setAuthor(authors[i]);
+            }
+            try (UnsynchronizedByteArrayOutputStream bos = UnsynchronizedByteArrayOutputStream.builder().get()) {
+                ct.writeTo(bos);
+                xml = new String(bos.toByteArray(), StandardCharsets.UTF_8);
+            }
+        }
+
+        try (MapBackedCommentsTable readBack = new MapBackedCommentsTable(false)) {
+            readBack.readFrom(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+            assertEquals("number of comments", authors.length, readBack.getNumberOfComments());
+            for (int i = 0; i < authors.length; i++) {
+                final XSSFComment comment = readBack.findCellComment(new CellAddress(i, 0));
+                assertNotNull("comment at row " + i, comment);
+                assertEquals("author at row " + i, authors[i], comment.getAuthor());
+                assertEquals("text at row " + i, texts[i], comment.getString().getString());
+            }
         }
     }
 

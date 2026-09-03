@@ -1,7 +1,6 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import com.microsoft.schemas.vml.CTShape;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.poi.ooxml.POIXMLDocumentPart;
 import org.apache.poi.openxml4j.opc.PackagePart;
 import org.apache.poi.ss.usermodel.ClientAnchor;
@@ -296,7 +295,9 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                 Integer authorId = authorIdIterator.next();
                 String author = authorId == null ? null : authors.get(authorId);
                 writer.write("<author>");
-                writer.write(author == null ? "" : StringEscapeUtils.escapeXml11(author));
+                if (author != null) {
+                    XmlTextWriter.writeEscaped(writer, author);
+                }
                 writer.write("</author>");
             }
             writer.write("</authors>");
@@ -306,7 +307,7 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                 SerializableComment comment = comments.get(commentsRefIterator.next());
                 if (comment != null) {
                     writer.write("<comment ref=\"");
-                    writer.write(StringEscapeUtils.escapeXml11(comment.getAddress().formatAsString()));
+                    XmlTextWriter.writeEscaped(writer, comment.getAddress().formatAsString());
                     String author = comment.getAuthor();
                     int authorId = findAuthor(author);
                     writer.write("\" authorId=\"");
@@ -318,7 +319,7 @@ public abstract class CommentsTableBase extends POIXMLDocumentPart implements Co
                             writer.write(rts.getCTRst().xmlText(textSaveOptions));
                         } else {
                             writer.write("<text><t>");
-                            writer.write(StringEscapeUtils.escapeXml11(comment.getString().getString()));
+                            XmlTextWriter.writeEscaped(writer, comment.getString().getString());
                             writer.write("</t></text>");
                         }
                     }
