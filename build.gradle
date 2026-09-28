@@ -34,7 +34,7 @@ dependencies {
     implementation 'com.h2database:h2:2.2.224'
     implementation "org.apache.poi:poi-ooxml:$poiVersion"
     implementation "org.apache.poi:poi:$poiVersion"
-    implementation 'org.apache.xmlbeans:xmlbeans:5.4.0'
+    implementation 'org.apache.xmlbeans:xmlbeans:5.4.1'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.nanohttpd:nanohttpd:2.3.1'
     testImplementation 'commons-io:commons-io:2.22.0'
