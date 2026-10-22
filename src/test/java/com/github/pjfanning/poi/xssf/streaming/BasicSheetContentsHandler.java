@@ -1,7 +1,7 @@
 package com.github.pjfanning.poi.xssf.streaming;
 
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
-import org.apache.poi.xssf.usermodel.XSSFComment;
+import org.apache.poi.ss.usermodel.Comment;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -22,7 +22,7 @@ public class BasicSheetContentsHandler implements XSSFSheetXMLHandler.SheetConte
     }
 
     @Override
-    public void cell(String cellReference, String formattedValue, XSSFComment comment) {
+    public void cell(String cellReference, String formattedValue, Comment comment) {
         pw.print(cellReference);
         pw.print(' ');
         pw.print(formattedValue);

@@ -4,7 +4,7 @@
 # poi-shared-strings
 Memory efficient Shared Strings Table and Comments Table implementations for [POI](https://poi.apache.org/) xlsx streaming.
 
-Supports read and write use cases when used with POI 5.x. poi-shared-strings 1.x supports POI 4.x.
+Supports read and write use cases when used with POI 6.x and requires Java 17 or above. poi-shared-strings 2.x supports POI 5.x and Java 8 and above. poi-shared-strings 1.x supports POI 4.x.
 
 https://bz.apache.org/bugzilla/show_bug.cgi?id=61832
 

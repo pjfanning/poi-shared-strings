@@ -155,15 +155,15 @@ public class TestTempFileSharedStringsTable {
             List<PackagePart> parts = pkg.getPartsByName(Pattern.compile("/xl/sharedStrings.xml"));
             assertEquals(1, parts.size());
 
-            SharedStringsTable stbl = new SharedStringsTable(parts.get(0));
+            // POI 6's SharedStringsTable rejects the out-of-range count, so compare against the known values
+            String[] expected = {"sdgf", "fdsag", "dsafv", "asdf", "asdc", "sadc", "asdfXZc", "sadf"};
             try (InputStream ssStream = parts.get(0).getInputStream()) {
                 sst.readFrom(ssStream);
             }
             assertEquals(8, sst.getCount());
-            assertEquals(stbl.getUniqueCount(), sst.getUniqueCount());
-            for (int i = 0; i < stbl.getUniqueCount(); i++) {
-                RichTextString i1 = stbl.getItemAt(i);
-                assertEquals(i1.getString(), sst.getItemAt(i).getString());
+            assertEquals(expected.length, sst.getUniqueCount());
+            for (int i = 0; i < expected.length; i++) {
+                assertEquals(expected[i], sst.getItemAt(i).getString());
             }
         }
     }
