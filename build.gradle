@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'com.github.pjfanning'
-version = '2.11.1-SNAPSHOT'
+version = '3.0.0-SNAPSHOT'
 
 sonarqube {
   properties {
@@ -25,7 +25,7 @@ repositories {
 }
 
 ext {
-    poiVersion = '5.5.1'
+    poiVersion = '6.0.0'
     slf4jVersion = '2.0.20'
 }
 
@@ -43,8 +43,14 @@ dependencies {
 }
 
 java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withJavadocJar()
     withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
 }
 
 tasks.named('jar') {
